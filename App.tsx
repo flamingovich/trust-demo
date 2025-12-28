@@ -31,16 +31,34 @@ const App: React.FC = () => {
   
   const t = translations[language];
 
+  // Защищенная инициализация кошельков с миграцией данных
   const [wallets, setWallets] = useState<Wallet[]>(() => {
     const saved = localStorage.getItem('demo_wallets');
+    let data: any[] = [];
+    
     if (saved) {
       try {
-        return JSON.parse(saved);
+        data = JSON.parse(saved);
       } catch (e) {
-        return [{ id: 'wallet-1', name: language === 'ru' ? 'Основной кошелек' : 'Main Wallet', assets: INITIAL_ASSETS, transactions: [] }];
+        data = [];
       }
     }
-    return [{ id: 'wallet-1', name: language === 'ru' ? 'Основной кошелек' : 'Main Wallet', assets: INITIAL_ASSETS, transactions: [] }];
+
+    if (!Array.isArray(data) || data.length === 0) {
+      return [{ 
+        id: 'wallet-1', 
+        name: language === 'ru' ? 'Основной кошелек' : 'Main Wallet', 
+        assets: INITIAL_ASSETS, 
+        transactions: [] 
+      }];
+    }
+
+    // Миграция: убеждаемся, что у каждого кошелька есть все необходимые поля
+    return data.map(w => ({
+      ...w,
+      assets: Array.isArray(w.assets) ? w.assets : INITIAL_ASSETS,
+      transactions: Array.isArray(w.transactions) ? w.transactions : []
+    }));
   });
 
   const [activeWalletId, setActiveWalletId] = useState(() => {
@@ -52,6 +70,7 @@ const App: React.FC = () => {
   }, [wallets, activeWalletId]);
 
   const sortedAssets = useMemo(() => {
+    if (!activeWallet || !activeWallet.assets) return [];
     let list = [...activeWallet.assets];
     if (sortOrder === 'asc') {
       list.sort((a, b) => (a.balance * a.priceUsd) - (b.balance * b.priceUsd));
@@ -59,7 +78,7 @@ const App: React.FC = () => {
       list.sort((a, b) => (b.balance * b.priceUsd) - (a.balance * a.priceUsd));
     }
     return list;
-  }, [activeWallet.assets, sortOrder]);
+  }, [activeWallet, sortOrder]);
 
   const fetchPrices = useCallback(async () => {
     try {
@@ -117,15 +136,12 @@ const App: React.FC = () => {
   }, [wallets, activeWalletId, language, theme]);
 
   const totalBalance = useMemo(() => {
+    if (!activeWallet || !activeWallet.assets) return 0;
     return activeWallet.assets.reduce((acc, asset) => acc + ((asset.balance || 0) * (asset.priceUsd || 0)), 0);
   }, [activeWallet]);
 
   const navigateTo = (view: View, assetId: string | null = null) => {
-    if (assetId !== null) {
-        setSelectedAssetId(assetId);
-    } else {
-        setSelectedAssetId(null);
-    }
+    setSelectedAssetId(assetId);
     setActiveView(view);
   };
 
@@ -160,7 +176,8 @@ const App: React.FC = () => {
           }
           return a;
         });
-        return { ...w, assets: updatedAssets, transactions: [fullTx, ...w.transactions] };
+        const currentTxs = Array.isArray(w.transactions) ? w.transactions : [];
+        return { ...w, assets: updatedAssets, transactions: [fullTx, ...currentTxs] };
       }
       return w;
     }));
@@ -194,6 +211,8 @@ const App: React.FC = () => {
   };
 
   const renderView = () => {
+    if (!activeWallet) return <div className="h-full bg-white dark:bg-black" />;
+
     switch (activeView) {
       case 'wallet':
         return (
@@ -211,12 +230,12 @@ const App: React.FC = () => {
         );
       case 'asset-detail':
         const selectedAsset = activeWallet.assets.find(a => a.id === selectedAssetId);
-        // Защита от белого экрана: если актив не найден, рендерим пустой экран и через useEffect вернемся назад
+        const walletTxs = Array.isArray(activeWallet.transactions) ? activeWallet.transactions : [];
         return (
           <AssetDetailView 
             asset={selectedAsset}
-            transactions={activeWallet.transactions.filter(tx => tx.assetId === selectedAssetId || tx.toAssetId === selectedAssetId)}
-            onBack={() => { navigateTo('wallet'); }}
+            transactions={walletTxs.filter(tx => tx.assetId === selectedAssetId || tx.toAssetId === selectedAssetId)}
+            onBack={() => navigateTo('wallet')}
             onAction={(view) => navigateTo(view, selectedAssetId)}
             t={t}
             language={language}

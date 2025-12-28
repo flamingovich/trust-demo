@@ -207,7 +207,7 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t }
                 placeholder="0"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="flex-1 w-full min-w-0 bg-transparent text-black dark:text-white focus:outline-none transition-all text-3xl font-bold placeholder-zinc-200 dark:placeholder-zinc-800"
+                className="flex-1 min-w-0 bg-transparent text-black dark:text-white focus:outline-none transition-all text-3xl font-bold placeholder-zinc-200 dark:placeholder-zinc-800"
               />
               <button 
                 onClick={() => setAmount(asset.balance.toString())}
