@@ -1,4 +1,5 @@
 
+
 export interface Asset {
   id: string;
   name: string;
@@ -28,9 +29,15 @@ export interface Transaction {
   blockNumber?: number;
 }
 
+export interface Wallet {
+  id: string;
+  name: string;
+  assets: Asset[];
+}
+
 export type SortOrder = 'default' | 'asc' | 'desc';
 export type Language = 'en' | 'ru';
 export type Theme = 'light' | 'dark';
 
-// Added 'rewards' and 'more' to resolve type overlap errors and allow these items to be used in navigation.
-export type View = 'wallet' | 'swap' | 'discover' | 'settings' | 'send' | 'receive' | 'top-up' | 'history' | 'rewards' | 'more';
+// Fix: Added 'rewards' and 'more' to the View union to allow safe comparison in BottomNav.tsx
+export type View = 'wallet' | 'swap' | 'discover' | 'settings' | 'send' | 'receive' | 'top-up' | 'history' | 'asset-detail' | 'wallet-manager' | 'rewards' | 'more';

@@ -43,7 +43,8 @@ export const translations = {
     date: "Date",
     networkFee: "Fee",
     txHash: "Hash",
-    block: "Block"
+    block: "Block",
+    cancel: "Cancel"
   },
   ru: {
     wallet: "Главная",
@@ -88,6 +89,7 @@ export const translations = {
     date: "Дата",
     networkFee: "Комиссия",
     txHash: "Хэш",
-    block: "Блок"
+    block: "Блок",
+    cancel: "Отмена"
   }
 };
