@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { Asset, View, SortOrder } from '../types';
-import { ArrowUpRight, Plus, Repeat, Landmark, Sprout, Settings, ScanLine, Copy, Search, ChevronDown, History, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { ArrowUpRight, Plus, Repeat, Landmark, Sprout, Settings, ScanLine, Copy, Search, ChevronDown, History, SlidersHorizontal, Loader2, X, Check } from 'lucide-react';
 
 interface Props {
   assets: Asset[];
@@ -25,10 +25,11 @@ const formatToken = (val: number) => {
 
 const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, sortOrder, onSortChange, onAction, onRefresh, isRefreshing, formatPrice, t }) => {
   const [pullDistance, setPullDistance] = useState(0);
+  const [showCopyMenu, setShowCopyMenu] = useState(false);
+  const [copiedNetwork, setCopiedNetwork] = useState<string | null>(null);
   const touchStartRef = useRef(0);
   const isPulling = useRef(false);
 
-  // Симуляция изменения в деньгах на основе процента (0.08% для примера)
   const balanceChangeUsd = totalBalance * 0.0008;
 
   const toggleSort = () => {
@@ -37,9 +38,9 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
     else onSortChange('default');
   };
 
-  const handleTouchStart = (Leeds: React.TouchEvent) => {
-    if (Leeds.currentTarget.scrollTop === 0) {
-      touchStartRef.current = Leeds.touches[0].clientY;
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.currentTarget.scrollTop === 0) {
+      touchStartRef.current = e.touches[0].clientY;
       isPulling.current = true;
     }
   };
@@ -57,6 +58,34 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
     if (pullDistance > 60) onRefresh();
     setPullDistance(0);
     isPulling.current = false;
+  };
+
+  const generateRandomAddress = (type: 'bitcoin' | 'evm' | 'tron') => {
+    const chars = '0123456789abcdef';
+    let res = '';
+    if (type === 'evm') {
+      res = '0x';
+      for (let i = 0; i < 40; i++) res += chars[Math.floor(Math.random() * chars.length)];
+    } else if (type === 'tron') {
+      res = 'T';
+      const trChars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+      for (let i = 0; i < 33; i++) res += trChars[Math.floor(Math.random() * trChars.length)];
+    } else {
+      res = 'bc1q';
+      const btcChars = '0123456789abcdefghijklmnopqrstuvwxyz';
+      for (let i = 0; i < 38; i++) res += btcChars[Math.floor(Math.random() * btcChars.length)];
+    }
+    return res;
+  };
+
+  const handleCopy = (type: 'bitcoin' | 'evm' | 'tron') => {
+    const addr = generateRandomAddress(type);
+    navigator.clipboard.writeText(addr);
+    setCopiedNetwork(type);
+    setTimeout(() => {
+      setCopiedNetwork(null);
+      setShowCopyMenu(false);
+    }, 1200);
   };
 
   return (
@@ -78,11 +107,17 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
         <button className="p-2 text-zinc-500 dark:text-zinc-400 btn-press">
           <ScanLine size={22} strokeWidth={2} />
         </button>
-        <button className="flex items-center space-x-1 px-4 py-1.5 rounded-full bg-zinc-100 dark:bg-dark-surface border border-zinc-200 dark:border-dark-border btn-press">
+        
+        {/* Wallet Selection Button */}
+        <button 
+          onClick={() => onAction('wallet-manager')}
+          className="flex items-center space-x-1 px-4 py-1.5 rounded-full bg-zinc-100 dark:bg-dark-surface border border-zinc-200 dark:border-dark-border btn-press active:scale-95 transition-transform"
+        >
           <span className="text-[13px] font-bold tracking-tight">{walletName}</span>
           <ChevronDown size={14} strokeWidth={3} />
         </button>
-        <button className="p-2 text-zinc-500 dark:text-zinc-400 btn-press">
+
+        <button onClick={() => setShowCopyMenu(true)} className="p-2 text-zinc-500 dark:text-zinc-400 btn-press">
           <Copy size={20} strokeWidth={2} />
         </button>
         <button className="p-2 text-zinc-500 dark:text-zinc-400 btn-press">
@@ -151,7 +186,7 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
                   <img 
                     src={asset.logoUrl} 
                     alt="" 
-                    className="w-7 h-7 object-contain rounded-[22%]" // Добавлено скругление для иконки внутри круга
+                    className="w-7 h-7 object-contain rounded-[22%]" 
                   />
                 </div>
                 {asset.networkIcon && (
@@ -186,6 +221,47 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
           </div>
         ))}
       </div>
+
+      {showCopyMenu && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center animate-fade-in p-0 m-0">
+          <div className="absolute inset-0 bg-black/60 glass-panel" onClick={() => setShowCopyMenu(false)}></div>
+          <div className="w-full max-w-[430px] bg-white dark:bg-zinc-950 rounded-t-[32px] p-6 pb-12 relative animate-ios-bottom-up shadow-2xl border-t border-white/5">
+            <div className="w-10 h-1 bg-zinc-200 dark:bg-zinc-800 rounded-full mx-auto mb-6"></div>
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold">Copy Address</h3>
+                <button onClick={() => setShowCopyMenu(false)} className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-500">
+                    <X size={20} />
+                </button>
+            </div>
+            <div className="space-y-3">
+              {[
+                { label: 'BITCOIN', type: 'bitcoin' as const, logo: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png' },
+                { label: 'EVM (ETH, BNB, SOL)', type: 'evm' as const, logo: 'https://cryptologos.cc/logos/ethereum-eth-logo.png' },
+                { label: 'TRON (TRX, USDT)', type: 'tron' as const, logo: 'https://cryptologos.cc/logos/tron-trx-logo.png' },
+              ].map((item) => (
+                <button 
+                  key={item.type}
+                  onClick={() => handleCopy(item.type)}
+                  className="w-full flex items-center justify-between p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 btn-press"
+                >
+                  <div className="flex items-center space-x-4">
+                    <img src={item.logo} className="w-6 h-6 object-contain" alt="" />
+                    <span className="font-bold text-[15px]">{item.label}</span>
+                  </div>
+                  {copiedNetwork === item.type ? (
+                    <div className="flex items-center space-x-1 text-green-500 font-bold text-xs uppercase animate-pop-in">
+                        <Check size={14} strokeWidth={3} />
+                        <span>Copied</span>
+                    </div>
+                  ) : (
+                    <Copy size={18} className="text-zinc-400" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

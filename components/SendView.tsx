@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import { Asset, Transaction } from '../types';
-import { ChevronLeft, QrCode, ShieldCheck, X, ChevronDown, CheckCircle2, Clipboard } from 'lucide-react';
+import { ChevronLeft, QrCode, ShieldCheck, X, ChevronDown, CheckCircle2, Clipboard, Loader2, Info } from 'lucide-react';
+import { USER_ADDRESSES } from '../constants';
 
 interface Props {
   assets: Asset[];
@@ -9,6 +10,7 @@ interface Props {
   onBack: () => void;
   onSend: (tx: Transaction) => void;
   t: any;
+  walletName: string;
 }
 
 const formatValue = (val: any, decimals: number = 4) => {
@@ -29,7 +31,7 @@ const formatUSD = (val: any) => {
   });
 };
 
-const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t }) => {
+const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, walletName }) => {
   const [asset, setAsset] = useState<Asset>(() => {
     return assets.find(a => a.id === initialAssetId) || assets[0];
   });
@@ -38,6 +40,7 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t }
   const [isConfirming, setIsConfirming] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('Blockchain validation in progress...');
 
   const usdValue = amount ? formatUSD(parseFloat(amount) * (asset?.priceUsd || 0)) : '0,00';
 
@@ -49,19 +52,20 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t }
 
   const handlePaste = async () => {
     try {
-      if (!navigator.clipboard || !navigator.clipboard.readText) {
-        console.debug('Clipboard API not available');
-        return;
-      }
       const text = await navigator.clipboard.readText();
       if (text) setAddress(text);
     } catch (err) {
-      console.debug('Clipboard access denied or failed');
+      console.debug('Clipboard access denied');
     }
   };
 
   const handleFinalSend = () => {
     setIsProcessing(true);
+    
+    // Cycle status messages
+    setTimeout(() => setStatusMessage('Syncing with nodes...'), 1500);
+    setTimeout(() => setStatusMessage('Finalizing block...'), 3000);
+
     setTimeout(() => {
       onSend({
         id: Math.random().toString(36).substr(2, 9),
@@ -72,14 +76,20 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t }
         timestamp: Date.now(),
         status: 'confirmed',
         hash: `0x${Math.random().toString(16).slice(2, 10)}...`,
-        networkFee: '0,85 USD'
+        networkFee: '1 TRX (0.15 USD)'
       });
       setIsProcessing(false);
       setIsSuccess(true);
       setTimeout(() => {
         onBack();
       }, 1800);
-    }, 2500);
+    }, 4500);
+  };
+
+  const getUserAddress = () => {
+    if (asset.id === 'bitcoin') return USER_ADDRESSES.bitcoin;
+    if (asset.id === 'tron' || asset.id === 'usdt-tron') return USER_ADDRESSES.tron;
+    return USER_ADDRESSES.evm;
   };
 
   if (isSuccess) {
@@ -90,7 +100,7 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t }
         </div>
         <h2 className="text-3xl font-bold tracking-tight">{t.done}!</h2>
         <p className="text-zinc-500 mt-3 text-center font-bold opacity-80">
-          Transaction broadcasted to the blockchain
+          Transaction confirmed and broadcasted
         </p>
       </div>
     );
@@ -99,59 +109,95 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t }
   if (isProcessing) {
     return (
       <div className="h-full flex flex-col items-center justify-center bg-white dark:bg-black p-10 animate-fade-in text-black dark:text-white">
-        <div className="relative w-20 h-20 mb-8">
-            <div className="absolute inset-0 border-4 border-blue-600/10 rounded-full"></div>
-            <div className="absolute inset-0 border-4 border-t-blue-600 rounded-full animate-spin"></div>
+        <div className="relative w-20 h-20 mb-10 flex items-center justify-center">
+            <Loader2 className="animate-spin text-blue-600" size={56} strokeWidth={3} />
         </div>
-        <h2 className="text-2xl font-bold tracking-tight">{t.processing}</h2>
-        <p className="text-zinc-500 mt-3 text-center font-bold opacity-70">Securing your transaction...</p>
+        <h2 className="text-2xl font-bold tracking-tight text-center">{t.processing}</h2>
+        <div className="mt-4 space-y-1.5 flex flex-col items-center">
+            <p className="text-zinc-500 text-sm font-bold opacity-70 animate-pulse">{statusMessage}</p>
+            <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest opacity-50">Estimated: ~5s</p>
+        </div>
       </div>
     );
   }
 
   if (isConfirming) {
+    const fromAddr = getUserAddress();
+    const truncatedFrom = `${fromAddr.slice(0, 6)}...${fromAddr.slice(-4)}`;
+    const feeTRX = 1.0;
+    const feeUSD = 0.15;
+    const amountVal = parseFloat(amount);
+    const totalUSD = (amountVal * asset.priceUsd) + feeUSD;
+
     return (
       <div className="h-full flex flex-col bg-white dark:bg-black text-black dark:text-white animate-ios-slide-in">
-        <div className="flex items-center justify-between p-6 pt-12 shrink-0">
+        <div className="flex items-center justify-between p-6 pt-12 shrink-0 border-b border-zinc-50 dark:border-white/5">
           <button onClick={() => setIsConfirming(false)} className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-900 btn-press">
             <ChevronLeft size={24} strokeWidth={2.5} />
           </button>
-          <h2 className="text-[17px] font-bold tracking-tight">{t.review}</h2>
+          <h2 className="text-[17px] font-bold tracking-tight">Summary</h2>
           <div className="w-10"></div>
         </div>
 
-        <div className="flex-1 px-6 flex flex-col pt-6 overflow-y-auto no-scrollbar">
+        <div className="flex-1 px-6 flex flex-col pt-10 overflow-y-auto no-scrollbar pb-10">
           <div className="flex flex-col items-center mb-10">
-            <div className="w-14 h-14 bg-zinc-50 dark:bg-zinc-900 rounded-[22px] flex items-center justify-center mb-5 border border-zinc-100 dark:border-white/5 shadow-sm">
-              <img src={asset.logoUrl} className="w-9 h-9 object-contain" alt="" />
-            </div>
-            <p className="text-4xl font-bold tracking-tight text-center">
-              {formatValue(parseFloat(amount))} <span className="text-zinc-400 font-bold text-2xl ml-1">{asset.symbol}</span>
-            </p>
-            <p className="text-zinc-500 font-bold text-sm mt-1">≈ {usdValue} $</p>
+            <h1 className="text-[48px] font-extrabold tracking-tight text-center flex items-center justify-center space-x-3">
+              <span>{formatValue(amountVal)}</span>
+              <span className="text-zinc-400 font-bold text-3xl">{asset.symbol}</span>
+            </h1>
+            <p className="text-zinc-400 font-bold text-lg opacity-80">≈ {usdValue} USD</p>
           </div>
 
-          <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-white/5 rounded-[32px] p-6 space-y-6 shadow-sm">
-            <div className="space-y-1.5">
-              <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-[0.2em]">{t.recipient}</p>
-              <p className="font-mono text-[13px] break-all text-zinc-800 dark:text-zinc-200 leading-relaxed font-bold">{address}</p>
+          <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-white/5 rounded-[36px] overflow-hidden shadow-sm">
+            <div className="p-6 space-y-6">
+              <div className="flex justify-between items-center">
+                <p className="text-zinc-400 text-[11px] font-bold uppercase tracking-[0.2em]">{t.asset}</p>
+                <div className="flex items-center space-x-2.5">
+                  <img src={asset.logoUrl} className="w-6 h-6 object-contain rounded-[22%]" alt="" />
+                  <span className="font-bold text-[14px]">{asset.name}</span>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-start pt-5 border-t border-zinc-200/50 dark:border-white/5">
+                <p className="text-zinc-400 text-[11px] font-bold uppercase tracking-[0.2em] mt-1">From</p>
+                <div className="text-right">
+                    <p className="font-bold text-[14px] text-zinc-900 dark:text-zinc-100">{walletName}</p>
+                    <p className="font-mono text-[11px] text-zinc-400 font-bold tracking-tight">{truncatedFrom}</p>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-start pt-5 border-t border-zinc-200/50 dark:border-white/5">
+                <p className="text-zinc-400 text-[11px] font-bold uppercase tracking-[0.2em] mt-1">To</p>
+                <p className="font-mono text-[11px] break-all text-zinc-800 dark:text-zinc-200 leading-relaxed font-bold text-right max-w-[220px]">
+                    {address}
+                </p>
+              </div>
+
+              <div className="flex justify-between items-center pt-5 border-t border-zinc-200/50 dark:border-white/5">
+                <div className="flex items-center space-x-1">
+                   <p className="text-zinc-400 text-[11px] font-bold uppercase tracking-[0.2em]">{t.networkFee}</p>
+                   <Info size={12} className="text-zinc-300" />
+                </div>
+                <p className="font-bold text-zinc-800 dark:text-zinc-200 text-[14px]">
+                  {feeTRX} TRX <span className="text-zinc-400 ml-1">(${feeUSD})</span>
+                </p>
+              </div>
             </div>
-            <div className="flex justify-between items-center border-t border-zinc-200/50 dark:border-white/5 pt-5">
-              <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-[0.2em]">{t.networkFee}</p>
-              <p className="font-bold text-zinc-700 dark:text-zinc-300 text-[15px]">0,85 $</p>
-            </div>
-            <div className="flex justify-between items-center border-t border-zinc-200/50 dark:border-white/5 pt-5">
-              <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-[0.2em]">Network</p>
-              <p className="font-bold text-black dark:text-white text-[15px]">{asset.network}</p>
+            
+            <div className="bg-zinc-100/50 dark:bg-zinc-800/30 p-6 flex justify-between items-center border-t border-zinc-200/50 dark:border-white/5">
+                <p className="text-zinc-500 text-[11px] font-bold uppercase tracking-[0.2em]">Max Total</p>
+                <p className="font-extrabold text-[17px] text-blue-600 dark:text-blue-500">
+                  {amountVal} {asset.symbol} + {feeTRX} TRX
+                </p>
             </div>
           </div>
 
-          <div className="mt-auto pb-10 pt-10">
+          <div className="mt-auto pt-10">
             <button 
               onClick={handleFinalSend}
-              className="w-full py-5 bg-blue-600 text-white rounded-[26px] font-bold text-lg shadow-xl shadow-blue-600/30 btn-press active:scale-95 transition-all"
+              className="w-full py-5.5 bg-blue-600 text-white rounded-[28px] font-bold text-lg shadow-xl shadow-blue-600/30 btn-press active:scale-95 transition-all"
             >
-              {t.confirm}
+              Confirm
             </button>
           </div>
         </div>

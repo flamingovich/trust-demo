@@ -90,7 +90,6 @@ const App: React.FC = () => {
   };
 
   const fetchPrices = useCallback(async (force = false) => {
-    // Не мучаем API чаще чем раз в 30 секунд, если не нажато "Обновить" вручную
     if (!force && Date.now() - lastPriceFetchRef.current < 30000) return;
 
     try {
@@ -128,9 +127,7 @@ const App: React.FC = () => {
           })
         };
       }));
-    } catch (error) { 
-      // Молча оставляем старые цены
-    }
+    } catch (error) { }
   }, [activeWallet.assets, activeWalletId]);
 
   const handleRefresh = async () => {
@@ -162,7 +159,6 @@ const App: React.FC = () => {
   const formatPrice = useCallback((usdAmount: number) => {
     const amount = currency === 'USD' ? usdAmount : usdAmount * rubRate;
     const symbol = currency === 'USD' ? '$' : '₽';
-    // Для цен используем компактный формат, если число большое
     const digits = amount < 1 ? 4 : 2;
     return `${amount.toLocaleString('ru-RU', { minimumFractionDigits: digits, maximumFractionDigits: digits })} ${symbol}`;
   }, [currency, rubRate]);
@@ -200,6 +196,25 @@ const App: React.FC = () => {
       }
       return w;
     }));
+  };
+
+  const handleCreateWallet = () => {
+    const newId = `wallet-${Date.now()}`;
+    const newWallet: Wallet = {
+      id: newId,
+      name: language === 'ru' ? `Кошелек ${wallets.length + 1}` : `Wallet ${wallets.length + 1}`,
+      assets: INITIAL_ASSETS,
+      transactions: []
+    };
+    setWallets([...wallets, newWallet]);
+    setActiveWalletId(newId);
+  };
+
+  const handleDeleteWallet = (id: string) => {
+    if (wallets.length <= 1) return;
+    const newWallets = wallets.filter(w => w.id !== id);
+    setWallets(newWallets);
+    if (activeWalletId === id) setActiveWalletId(newWallets[0].id);
   };
 
   const handleBuyToken = (tokenData: any, usdtAmount: number) => {
@@ -263,7 +278,7 @@ const App: React.FC = () => {
         const selectedAsset = activeWallet.assets.find(a => a.id === selectedAssetId);
         return <AssetDetailView asset={selectedAsset} transactions={activeWallet.transactions.filter(tx => tx.assetId === selectedAssetId || tx.toAssetId === selectedAssetId)} onBack={() => navigateTo('wallet')} onAction={(view) => navigateTo(view, selectedAssetId)} t={t} formatPrice={formatPrice} language={language} allAssets={activeWallet.assets} />;
       case 'send':
-        return <SendView assets={activeWallet.assets} initialAssetId={selectedAssetId} onBack={() => navigateTo('wallet')} onSend={handleAddTransaction} t={t} />;
+        return <SendView assets={activeWallet.assets} initialAssetId={selectedAssetId} onBack={() => navigateTo('wallet')} onSend={handleAddTransaction} t={t} walletName={activeWallet.name} />;
       case 'receive':
         return <ReceiveView assets={activeWallet.assets} initialAssetId={selectedAssetId} onBack={() => navigateTo('wallet')} onSimulateReceive={handleAddTransaction} t={t} />;
       case 'top-up':
@@ -276,6 +291,8 @@ const App: React.FC = () => {
         return <SettingsView onBack={() => navigateTo('wallet')} language={language} onLanguageChange={setLanguage} theme={theme} onThemeChange={setTheme} currency={currency} onCurrencyChange={setCurrency} onReset={() => setWallets([{id:'wallet-1', name: 'Main', assets: INITIAL_ASSETS, transactions: []}])} t={t} />;
       case 'discover':
         return <DiscoverView onBuy={handleBuyToken} usdtBalance={activeWallet.assets.find(a => a.id === 'usdt-tron')?.balance || 0} language={language} />;
+      case 'wallet-manager':
+        return <WalletManagerView wallets={wallets} activeWalletId={activeWalletId} onSelect={(id) => { setActiveWalletId(id); navigateTo('wallet'); }} onCreate={handleCreateWallet} onDelete={handleDeleteWallet} onClose={() => navigateTo('wallet')} t={t} language={language} />;
       default:
         return <div className="p-10 text-center text-zinc-500">В разработке</div>;
     }
