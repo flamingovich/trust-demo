@@ -1,0 +1,5 @@
+{
+  "name": "TrustWallet Demo",
+  "description": "A mobile-first crypto wallet interface inspired by Trust Wallet, allowing demo balance management, simulated transfers, and receipt of assets like USDT and TRX.",
+  "requestFramePermissions": []
+}
