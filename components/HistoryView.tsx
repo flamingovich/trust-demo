@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Transaction, Asset, Language } from '../types';
-import { ChevronLeft, ArrowUpRight, ArrowDownLeft, CheckCircle2, Star, X, ShieldCheck, Copy, ExternalLink, Repeat, History, Check } from 'lucide-react';
+import { ChevronLeft, ArrowUpRight, ArrowDownLeft, X, ShieldCheck, ExternalLink, Repeat, History, Check, Star } from 'lucide-react';
 
 interface Props {
   transactions: Transaction[];
@@ -42,7 +42,7 @@ const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, languag
   }, {});
 
   return (
-    <div className="h-full bg-white dark:bg-black text-black dark:text-white flex flex-col animate-spring-slide relative transition-colors duration-300">
+    <div className="h-full bg-white dark:bg-black text-black dark:text-white flex flex-col animate-ios-slide-in relative transition-colors duration-300">
       <div className="px-4 pt-4 pb-4 flex items-center justify-between shrink-0">
         <button onClick={onBack} className="p-3 text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-900 rounded-full btn-press">
           <ChevronLeft size={24} />
@@ -100,7 +100,7 @@ const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, languag
                             <h4 className="font-semibold text-[15px]">
                               {isSwap ? (language === 'ru' ? 'Обмен' : 'Swap') : (language === 'ru' ? 'Перевод' : 'Transfer')}
                             </h4>
-                            <div className="flex items-center justify-center w-3.5 h-3.5 bg-green-500 rounded-full">
+                            <div className="flex items-center justify-center w-3.5 h-3.5 bg-green-500 rounded-full shrink-0">
                               <Check size={9} strokeWidth={4} className="text-white" />
                             </div>
                           </div>

@@ -66,7 +66,9 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t }
         amount: parseFloat(amount),
         address,
         timestamp: Date.now(),
-        status: 'confirmed'
+        status: 'confirmed',
+        hash: `0x${Math.random().toString(16).slice(2, 10)}...`,
+        networkFee: '0,85 USD'
       });
       setIsProcessing(false);
       setIsSuccess(true);
@@ -165,6 +167,7 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t }
 
       <div className="px-6 space-y-6 mt-4 flex-1 overflow-y-auto no-scrollbar pb-10">
         <div className="space-y-4">
+          {/* Адрес получателя */}
           <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-white/5 rounded-[28px] p-5 shadow-sm">
             <div className="flex justify-between items-center mb-3 ml-1">
               <label className="text-zinc-400 text-[10px] font-semibold uppercase tracking-[0.2em]">{t.recipient}</label>
@@ -187,25 +190,26 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t }
             />
           </div>
 
-          <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-white/5 rounded-[28px] p-5 shadow-sm">
+          {/* Сумма отправки */}
+          <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-white/5 rounded-[28px] p-5 shadow-sm overflow-hidden">
             <div className="flex justify-between items-center mb-3 ml-1">
               <label className="text-zinc-400 text-[10px] font-semibold uppercase tracking-[0.2em]">{t.amount}</label>
               <div className="text-[11px] font-semibold text-zinc-500">
                 Bal: <span className="text-zinc-900 dark:text-zinc-100">{formatValue(asset.balance)} {asset.symbol}</span>
               </div>
             </div>
-            <div className="flex items-center min-h-[44px]">
+            <div className="flex items-center justify-between min-h-[44px]">
               <input 
                 type="number"
                 inputMode="decimal"
                 placeholder="0"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="flex-1 bg-transparent text-black dark:text-white focus:outline-none transition-all text-3xl font-semibold placeholder-zinc-200 dark:placeholder-zinc-800"
+                className="flex-1 min-w-0 bg-transparent text-black dark:text-white focus:outline-none transition-all text-3xl font-semibold placeholder-zinc-200 dark:placeholder-zinc-800"
               />
               <button 
                 onClick={() => setAmount(asset.balance.toString())}
-                className="shrink-0 text-blue-600 dark:text-blue-500 text-[11px] font-bold bg-blue-500/10 px-3 py-1.5 rounded-xl border border-blue-500/10 active:scale-95 transition-all ml-4 h-8 flex items-center justify-center"
+                className="shrink-0 text-blue-600 dark:text-blue-500 text-[11px] font-bold bg-blue-500/10 px-3.5 py-1.5 rounded-xl border border-blue-500/10 active:scale-95 transition-all ml-4"
               >
                 MAX
               </button>
@@ -215,6 +219,7 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t }
             </div>
           </div>
 
+          {/* Выбор актива */}
           <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-white/5 rounded-[28px] p-5 shadow-sm">
             <label className="text-zinc-400 text-[10px] font-semibold uppercase tracking-[0.2em] ml-1 block mb-3">{t.asset}</label>
             <div className="relative">
