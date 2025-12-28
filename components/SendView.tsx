@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Asset, Transaction } from '../types';
 import { ChevronLeft, QrCode, ShieldCheck, X, ChevronDown, CheckCircle2, Clipboard, Loader2, Info } from 'lucide-react';
 import { USER_ADDRESSES } from '../constants';
@@ -42,11 +42,20 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
   const [isSuccess, setIsSuccess] = useState(false);
   const [statusMessage, setStatusMessage] = useState('Blockchain validation in progress...');
 
-  // Get real TRX price from assets list for fee calculation
+  // Realistic dynamic Tron fee logic
   const trxPrice = useMemo(() => {
     const trx = assets.find(a => a.id === 'tron');
-    return trx ? trx.priceUsd : 0.15; // fallback to 0.15 if not found
+    return trx ? trx.priceUsd : 0.12; 
   }, [assets]);
+
+  const dynamicFeeTRX = useMemo(() => {
+    // USDT transfers on TRC20 typically cost ~13.5 TRX or ~32 TRX depending on energy
+    // Standard TRX transfers cost ~1.1 TRX
+    if (asset.id === 'usdt-tron') return 13.5;
+    return 1.1;
+  }, [asset.id]);
+
+  const dynamicFeeUSD = (dynamicFeeTRX * trxPrice).toFixed(2);
 
   const usdValue = useMemo(() => {
     const val = amount ? parseFloat(amount) * (asset?.priceUsd || 0) : 0;
@@ -68,15 +77,13 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
     }
   };
 
-  const feeTRX = 1.0;
-  const feeUSD = (feeTRX * trxPrice).toFixed(2);
-
   const handleFinalSend = () => {
     setIsProcessing(true);
     
-    // Cycle status messages
-    setTimeout(() => setStatusMessage('Syncing with nodes...'), 1500);
-    setTimeout(() => setStatusMessage('Finalizing block...'), 3000);
+    // Cycle status messages for better UX
+    setTimeout(() => setStatusMessage('Syncing with TRON nodes...'), 1200);
+    setTimeout(() => setStatusMessage('Broadcasting signed message...'), 2500);
+    setTimeout(() => setStatusMessage('Waiting for confirmation...'), 3800);
 
     setTimeout(() => {
       onSend({
@@ -88,7 +95,7 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
         timestamp: Date.now(),
         status: 'confirmed',
         hash: `0x${Math.random().toString(16).slice(2, 10)}...`,
-        networkFee: `${feeTRX} TRX (${feeUSD} USD)`
+        networkFee: `${dynamicFeeTRX} TRX ($${dynamicFeeUSD})`
       });
       setIsProcessing(false);
       setIsSuccess(true);
@@ -122,12 +129,12 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
     return (
       <div className="h-full flex flex-col items-center justify-center bg-white dark:bg-black p-10 animate-fade-in text-black dark:text-white">
         <div className="relative w-24 h-24 mb-10 flex items-center justify-center">
-            <Loader2 className="animate-spin text-blue-600" size={64} strokeWidth={2.5} />
+            <Loader2 className="animate-spin text-[#3262F1]" size={64} strokeWidth={2.5} />
         </div>
         <h2 className="text-2xl font-bold tracking-tight text-center">{t.processing}</h2>
         <div className="mt-4 space-y-2 flex flex-col items-center">
             <p className="text-zinc-500 text-[15px] font-bold opacity-70 animate-pulse">{statusMessage}</p>
-            <p className="text-zinc-400 text-[11px] font-bold uppercase tracking-[0.2em] opacity-40">Blockchain Network Delay: 3-5s</p>
+            <p className="text-zinc-400 text-[11px] font-bold uppercase tracking-[0.2em] opacity-40">TRON Network Validation</p>
         </div>
       </div>
     );
@@ -144,69 +151,74 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
           <button onClick={() => setIsConfirming(false)} className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-100 btn-press">
             <ChevronLeft size={24} strokeWidth={2} />
           </button>
-          <h2 className="text-[17px] font-bold tracking-tight text-zinc-900">{t.summary}</h2>
+          <h2 className="text-[18px] font-bold tracking-tight text-[#1A1C1E]">{t.summary}</h2>
           <div className="w-10"></div>
         </div>
 
-        <div className="flex-1 px-5 flex flex-col pt-12 overflow-y-auto no-scrollbar pb-32">
-          <div className="flex flex-col items-center mb-12">
-            <h1 className="text-[48px] font-bold tracking-tight text-center flex items-center justify-center space-x-3 text-[#1A1C1E]">
+        <div className="flex-1 px-5 flex flex-col pt-10 overflow-y-auto no-scrollbar">
+          <div className="flex flex-col items-center mb-10">
+            <h1 className="text-[52px] font-bold tracking-tight text-center flex items-center justify-center space-x-3 text-[#1A1C1E] leading-none">
               <span>{formatValue(amountVal)}</span>
               <span className="text-[#A2ABB8] font-medium text-4xl">{asset.symbol}</span>
             </h1>
-            <p className="text-[#A2ABB8] font-bold text-lg">≈ {usdValue} USD</p>
+            <p className="text-[#A2ABB8] font-bold text-lg mt-3">≈ {usdValue} USD</p>
           </div>
 
-          <div className="bg-white border border-zinc-100 rounded-[32px] overflow-hidden shadow-[0_2px_15px_-3px_rgba(0,0,0,0.04)]">
-            <div className="p-6 space-y-6">
+          <div className="bg-white border border-zinc-100 rounded-[32px] overflow-hidden shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)] mx-1">
+            <div className="p-6 space-y-7">
+              {/* Asset Row */}
               <div className="flex justify-between items-center">
-                <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em]">{t.asset}</p>
+                <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em]">{t.assetLabel}</p>
                 <div className="flex items-center space-x-2.5">
                   <img src={asset.logoUrl} className="w-6 h-6 object-contain rounded-[22%]" alt="" />
-                  <span className="font-bold text-[14px] text-[#1A1C1E]">{asset.symbol}</span>
+                  <span className="font-bold text-[15px] text-[#1A1C1E]">{asset.symbol}</span>
                 </div>
               </div>
 
+              {/* From Row */}
               <div className="flex justify-between items-start pt-6 border-t border-zinc-50">
-                <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em] mt-1">{t.from}</p>
+                <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em] mt-1">{t.fromLabel}</p>
                 <div className="text-right">
                     <p className="font-bold text-[14px] text-[#1A1C1E]">{walletName}</p>
                     <p className="font-mono text-[11px] text-[#A2ABB8] font-bold tracking-tight">{truncatedFrom}</p>
                 </div>
               </div>
 
+              {/* To Row */}
               <div className="flex justify-between items-start pt-6 border-t border-zinc-50">
-                <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em] mt-1">{t.to}</p>
-                <div className="text-right max-w-[200px]">
+                <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em] mt-1">{t.toLabel}</p>
+                <div className="text-right max-w-[220px]">
                   <p className="font-mono text-[11px] break-all text-[#1A1C1E] leading-relaxed font-bold">
                       {address}
                   </p>
                 </div>
               </div>
 
+              {/* Fee Row */}
               <div className="flex justify-between items-center pt-6 border-t border-zinc-50">
-                <div className="flex items-center space-x-1">
-                   <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em]">{t.networkFee}</p>
+                <div className="flex items-center space-x-1.5">
+                   <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em]">{t.feeLabel}</p>
                    <Info size={12} className="text-[#D1D8E0]" />
                 </div>
-                <p className="font-bold text-[#1A1C1E] text-[14px]">
-                  {feeTRX} TRX <span className="text-[#A2ABB8] font-medium ml-1">(${feeUSD})</span>
+                <p className="font-bold text-[#1A1C1E] text-[15px]">
+                  {dynamicFeeTRX} TRX <span className="text-[#A2ABB8] font-medium ml-1">(${dynamicFeeUSD})</span>
                 </p>
               </div>
             </div>
             
-            <div className="bg-[#F8FAFC]/50 p-6 flex justify-between items-center border-t border-zinc-50">
-                <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em]">{t.maxTotal}</p>
+            {/* Max Total Section */}
+            <div className="bg-[#F8FAFC] p-6 flex justify-between items-center border-t border-zinc-50">
+                <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em]">{t.maxTotalLabel}</p>
                 <p className="font-bold text-[15px] text-[#3262F1]">
-                  {formatValue(amountVal)} {asset.symbol} + {feeTRX} TRX
+                  {formatValue(amountVal)} {asset.symbol} + {dynamicFeeTRX} TRX
                 </p>
             </div>
           </div>
 
-          <div className="fixed bottom-10 left-0 right-0 px-8 flex justify-center">
+          <div className="mt-auto pt-12 pb-10 px-4">
             <button 
               onClick={handleFinalSend}
-              className="w-full max-w-[360px] py-4.5 bg-[#3262F1] text-white rounded-full font-bold text-[17px] shadow-[0_8px_25px_-5px_rgba(50,98,241,0.4)] btn-press active:scale-95 transition-all"
+              className="w-full py-5 bg-[#3262F1] text-white rounded-2xl font-bold text-[18px] shadow-[0_12px_30px_-5px_rgba(50,98,241,0.35)] btn-press active:scale-95 transition-all"
             >
               {t.confirm}
             </button>
@@ -232,11 +244,11 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
             <div className="flex justify-between items-center mb-3 ml-1">
               <label className="text-zinc-400 text-[10px] font-bold uppercase tracking-[0.2em]">{t.recipient}</label>
               <div className="flex items-center space-x-4">
-                <button onClick={handlePaste} className="text-blue-600 dark:text-blue-500 text-[11px] font-bold flex items-center space-x-1 active:opacity-60">
+                <button onClick={handlePaste} className="text-[#3262F1] text-[11px] font-bold flex items-center space-x-1 active:opacity-60">
                   <Clipboard size={12} />
                   <span>PASTE</span>
                 </button>
-                <button className="text-blue-600 dark:text-blue-500 text-[11px] font-bold flex items-center space-x-1 active:opacity-60">
+                <button className="text-[#3262F1] text-[11px] font-bold flex items-center space-x-1 active:opacity-60">
                   <QrCode size={12} />
                   <span>SCAN</span>
                 </button>
@@ -268,7 +280,7 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
               />
               <button 
                 onClick={() => setAmount(asset.balance.toString())}
-                className="shrink-0 text-blue-600 dark:text-blue-500 text-[11px] font-bold bg-blue-500/10 px-3.5 py-1.5 rounded-xl border border-blue-500/10 active:scale-95 transition-all ml-4 h-8 flex items-center justify-center"
+                className="shrink-0 text-[#3262F1] text-[11px] font-bold bg-[#3262F1]/10 px-3.5 py-1.5 rounded-xl border border-[#3262F1]/10 active:scale-95 transition-all ml-4 h-8 flex items-center justify-center"
               >
                 MAX
               </button>
@@ -310,7 +322,7 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
           <button 
             disabled={!address || !amount || parseFloat(amount) > asset.balance}
             onClick={handleNext}
-            className="w-full py-5 bg-blue-600 text-white rounded-[26px] font-bold text-lg transition-all shadow-xl shadow-blue-600/30 btn-press active:scale-95 disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none"
+            className="w-full py-5 bg-[#3262F1] text-white rounded-[26px] font-bold text-lg transition-all shadow-xl shadow-[#3262F1]/30 btn-press active:scale-95 disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none"
           >
             {parseFloat(amount) > asset.balance ? t.insufficient : t.send}
           </button>
