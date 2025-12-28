@@ -33,7 +33,13 @@ const App: React.FC = () => {
 
   const [wallets, setWallets] = useState<Wallet[]>(() => {
     const saved = localStorage.getItem('demo_wallets');
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return [{ id: 'wallet-1', name: language === 'ru' ? 'Основной кошелек' : 'Main Wallet', assets: INITIAL_ASSETS, transactions: [] }];
+      }
+    }
     return [{ id: 'wallet-1', name: language === 'ru' ? 'Основной кошелек' : 'Main Wallet', assets: INITIAL_ASSETS, transactions: [] }];
   });
 
@@ -117,6 +123,8 @@ const App: React.FC = () => {
   const navigateTo = (view: View, assetId: string | null = null) => {
     if (assetId !== null) {
         setSelectedAssetId(assetId);
+    } else {
+        setSelectedAssetId(null);
     }
     setActiveView(view);
   };
@@ -203,15 +211,12 @@ const App: React.FC = () => {
         );
       case 'asset-detail':
         const selectedAsset = activeWallet.assets.find(a => a.id === selectedAssetId);
-        if (!selectedAsset) {
-          // If for some reason the asset isn't found immediately, we show a fallback or retry navigation
-          return <div className="h-full bg-white dark:bg-black" />;
-        }
+        // Защита от белого экрана: если актив не найден, рендерим пустой экран и через useEffect вернемся назад
         return (
           <AssetDetailView 
             asset={selectedAsset}
             transactions={activeWallet.transactions.filter(tx => tx.assetId === selectedAssetId || tx.toAssetId === selectedAssetId)}
-            onBack={() => { setSelectedAssetId(null); navigateTo('wallet'); }}
+            onBack={() => { navigateTo('wallet'); }}
             onAction={(view) => navigateTo(view, selectedAssetId)}
             t={t}
             language={language}
