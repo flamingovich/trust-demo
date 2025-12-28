@@ -76,7 +76,7 @@ const App: React.FC = () => {
             return {
               ...asset,
               priceUsd: data[cgId].usd,
-              change24h: data[cgId].usd_24h_change || asset.change24h
+              change24h: typeof data[cgId].usd_24h_change === 'number' ? data[cgId].usd_24h_change : asset.change24h
             };
           }
           return asset;
@@ -111,11 +111,13 @@ const App: React.FC = () => {
   }, [wallets, activeWalletId, language, theme]);
 
   const totalBalance = useMemo(() => {
-    return activeWallet.assets.reduce((acc, asset) => acc + (asset.balance * asset.priceUsd), 0);
+    return activeWallet.assets.reduce((acc, asset) => acc + ((asset.balance || 0) * (asset.priceUsd || 0)), 0);
   }, [activeWallet]);
 
   const navigateTo = (view: View, assetId: string | null = null) => {
-    if (assetId) setSelectedAssetId(assetId);
+    if (assetId !== null) {
+        setSelectedAssetId(assetId);
+    }
     setActiveView(view);
   };
 
@@ -202,14 +204,14 @@ const App: React.FC = () => {
       case 'asset-detail':
         const selectedAsset = activeWallet.assets.find(a => a.id === selectedAssetId);
         if (!selectedAsset) {
-          // Fallback if state hasn't updated yet to prevent white screen crash
+          // If for some reason the asset isn't found immediately, we show a fallback or retry navigation
           return <div className="h-full bg-white dark:bg-black" />;
         }
         return (
           <AssetDetailView 
             asset={selectedAsset}
             transactions={activeWallet.transactions.filter(tx => tx.assetId === selectedAssetId || tx.toAssetId === selectedAssetId)}
-            onBack={() => navigateTo('wallet')}
+            onBack={() => { setSelectedAssetId(null); navigateTo('wallet'); }}
             onAction={(view) => navigateTo(view, selectedAssetId)}
             t={t}
             language={language}
