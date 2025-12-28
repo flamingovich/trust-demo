@@ -20,10 +20,18 @@ const formatValue = (val: number, maxDecimals: number = 4) => {
 
 const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, language }) => {
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
-  const getAsset = (id: string) => assets.find(a => a.id === id);
+  
+  const getSymbolById = (id: string) => {
+    if (id === 'usdt-tron') return 'USDT';
+    const found = assets.find(a => a.id === id);
+    return found ? found.symbol : id.toUpperCase();
+  };
 
-  const formatAmount = (val: number) => formatValue(val, 4);
-  const formatUSD = (val: number) => formatValue(val, 2);
+  const getPriceById = (id: string) => {
+    if (id === 'usdt-tron') return 1;
+    const found = assets.find(a => a.id === id);
+    return found ? found.priceUsd : 0;
+  };
 
   const formatDateLabel = (timestamp: number) => {
     const d = new Date(timestamp);
@@ -74,15 +82,16 @@ const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, languag
               </h3>
               <div className="space-y-2">
                 {groupedTransactions[dateLabel].map((tx: Transaction) => {
-                  const asset = getAsset(tx.assetId);
                   const isSend = tx.type === 'send';
                   const isReceive = tx.type === 'receive';
                   const isSwap = tx.type === 'swap';
+                  const fromSymbol = getSymbolById(tx.assetId);
+                  const toSymbol = isSwap ? getSymbolById(tx.toAssetId || '') : '';
                   
                   return (
                     <div 
                       key={tx.id} 
-                      className="flex items-center justify-between p-4 bg-zinc-50/50 dark:bg-zinc-900/30 rounded-[24px] border border-transparent active:border-zinc-200 dark:active:border-white/10 active:bg-white dark:active:bg-zinc-900 transition-professional cursor-pointer btn-press"
+                      className="flex items-center justify-between p-4 bg-zinc-50/50 dark:bg-zinc-900/30 rounded-[24px] border border-transparent active:border-zinc-200 dark:active:border-white/10 active:bg-white dark:active:bg-zinc-900 transition-all cursor-pointer btn-press"
                       onClick={() => setSelectedTx(tx)}
                     >
                       <div className="flex items-center space-x-4">
@@ -106,19 +115,32 @@ const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, languag
                           </div>
                           <p className="text-[12px] text-zinc-500 font-normal truncate max-w-[120px]">
                             {isSwap 
-                              ? `${asset?.symbol} → ${getAsset(tx.toAssetId!)?.symbol}`
+                              ? `${fromSymbol} → ${toSymbol}`
                               : (tx.address ? `${tx.address.slice(0, 6)}...${tx.address.slice(-4)}` : 'TDii6va...8xcqYx')
                             }
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className={`font-semibold text-[16px] tracking-tight ${isReceive ? 'text-green-600 dark:text-green-500' : 'text-zinc-900 dark:text-zinc-100'}`}>
-                          {isReceive ? '+' : '-'}{formatAmount(tx.amount)} {asset?.symbol}
-                        </p>
-                        <p className="text-[12px] text-zinc-400 font-normal">
-                          ≈ ${formatUSD(tx.amount * (asset?.priceUsd || 1))}
-                        </p>
+                        {isSwap ? (
+                           <div className="flex flex-col items-end">
+                              <p className="font-bold text-[13px] tracking-tight text-zinc-900 dark:text-zinc-100">
+                                {formatValue(tx.amount)} {fromSymbol} → {formatValue(tx.toAmount || 0)} {toSymbol}
+                              </p>
+                              <p className="text-[11px] text-zinc-400 font-normal">
+                                ≈ ${(tx.amount * getPriceById(tx.assetId)).toFixed(2)}
+                              </p>
+                           </div>
+                        ) : (
+                          <>
+                            <p className={`font-semibold text-[16px] tracking-tight ${isReceive ? 'text-green-600 dark:text-green-500' : 'text-zinc-900 dark:text-zinc-100'}`}>
+                              {isReceive ? '+' : '-'}{formatValue(tx.amount)} {fromSymbol}
+                            </p>
+                            <p className="text-[12px] text-zinc-400 font-normal">
+                              ≈ ${(tx.amount * getPriceById(tx.assetId)).toFixed(2)}
+                            </p>
+                          </>
+                        )}
                       </div>
                     </div>
                   );
@@ -151,14 +173,13 @@ const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, languag
                  selectedTx.type === 'send' ? <ArrowUpRight size={32} strokeWidth={2.5} /> : 
                  <ArrowDownLeft size={32} strokeWidth={2.5} />}
               </div>
-              <h3 className="text-3xl font-semibold tracking-tight">
-                {selectedTx.type === 'receive' ? '+' : '-'}{formatAmount(selectedTx.amount)} {getAsset(selectedTx.assetId)?.symbol}
+              <h3 className="text-2xl font-bold tracking-tight">
+                {selectedTx.type === 'swap' ? (
+                   <span className="text-[18px]">{formatValue(selectedTx.amount)} {getSymbolById(selectedTx.assetId)} → {formatValue(selectedTx.toAmount || 0)} {getSymbolById(selectedTx.toAssetId!)}</span>
+                ) : (
+                  <>{selectedTx.type === 'receive' ? '+' : '-'}{formatValue(selectedTx.amount)} {getSymbolById(selectedTx.assetId)}</>
+                )}
               </h3>
-              {selectedTx.type === 'swap' && (
-                <p className="text-lg text-zinc-500 font-semibold mt-1">
-                   → +{formatAmount(selectedTx.toAmount || 0)} {getAsset(selectedTx.toAssetId!)?.symbol}
-                </p>
-              )}
               <div className="flex items-center justify-center space-x-1.5 mt-3">
                 <ShieldCheck size={14} className="text-green-500" />
                 <span className="text-green-500 text-[11px] font-semibold uppercase tracking-[0.2em]">{t.done}</span>

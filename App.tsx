@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Asset, Transaction, SortOrder, Language, Theme, Wallet } from './types';
-import { INITIAL_ASSETS } from './constants';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { View, Asset, Transaction, SortOrder, Language, Theme, Wallet, Currency } from './types';
+import { INITIAL_ASSETS, CG_ID_MAP } from './constants';
 import WalletDashboard from './components/WalletDashboard';
 import SendView from './components/SendView';
 import ReceiveView from './components/ReceiveView';
@@ -21,6 +21,9 @@ const App: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   
+  // Реф для отслеживания времени последнего обновления цен
+  const lastPriceFetchRef = useRef<number>(0);
+
   const [language, setLanguage] = useState<Language>(() => {
     return (localStorage.getItem('demo_wallet_lang') as Language) || 'ru';
   });
@@ -28,22 +31,21 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<Theme>(() => {
     return (localStorage.getItem('demo_wallet_theme') as Theme) || 'light';
   });
+
+  const [currency, setCurrency] = useState<Currency>(() => {
+    return (localStorage.getItem('demo_wallet_currency') as Currency) || 'USD';
+  });
+
+  const [rubRate, setRubRate] = useState<number>(92.5); 
   
   const t = translations[language];
 
-  // Защищенная инициализация кошельков с миграцией данных
   const [wallets, setWallets] = useState<Wallet[]>(() => {
     const saved = localStorage.getItem('demo_wallets');
     let data: any[] = [];
-    
     if (saved) {
-      try {
-        data = JSON.parse(saved);
-      } catch (e) {
-        data = [];
-      }
+      try { data = JSON.parse(saved); } catch (e) { data = []; }
     }
-
     if (!Array.isArray(data) || data.length === 0) {
       return [{ 
         id: 'wallet-1', 
@@ -52,8 +54,6 @@ const App: React.FC = () => {
         transactions: [] 
       }];
     }
-
-    // Миграция: убеждаемся, что у каждого кошелька есть все необходимые поля
     return data.map(w => ({
       ...w,
       assets: Array.isArray(w.assets) ? w.assets : INITIAL_ASSETS,
@@ -80,48 +80,65 @@ const App: React.FC = () => {
     return list;
   }, [activeWallet, sortOrder]);
 
-  const fetchPrices = useCallback(async () => {
+  const fetchRubRate = async () => {
     try {
-      const mapping: Record<string, string> = {
-        'bitcoin': 'bitcoin',
-        'eth': 'ethereum',
-        'tron': 'tron',
-        'usdt-tron': 'tether'
-      };
-      const cgIds = Object.values(mapping).join(',');
+      const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (data && data.rates && data.rates.RUB) setRubRate(data.rates.RUB);
+    } catch (e) { /* Игнорируем ошибки для фонового обновления */ }
+  };
+
+  const fetchPrices = useCallback(async (force = false) => {
+    // Не мучаем API чаще чем раз в 30 секунд, если не нажато "Обновить" вручную
+    if (!force && Date.now() - lastPriceFetchRef.current < 30000) return;
+
+    try {
+      const cgIds = activeWallet.assets
+        .map(a => CG_ID_MAP[a.id] || a.id)
+        .join(',');
+      
       const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cgIds}&vs_currencies=usd&include_24hr_change=true`);
-      if (!response.ok) throw new Error('Fetch failed');
+      
+      if (!response.ok) {
+        // Если 429 лимит, просто выходим без ворнингов
+        if (response.status === 429) return;
+        throw new Error('API Error');
+      }
+      
       const data = await response.json();
+      lastPriceFetchRef.current = Date.now();
       
       setWallets(prev => prev.map(wallet => ({
         ...wallet,
         assets: wallet.assets.map(asset => {
-          const cgId = mapping[asset.id];
-          if (cgId && data[cgId]) {
+          const cgId = CG_ID_MAP[asset.id] || asset.id;
+          if (data[cgId]) {
             return {
               ...asset,
               priceUsd: data[cgId].usd,
-              change24h: typeof data[cgId].usd_24h_change === 'number' ? data[cgId].usd_24h_change : asset.change24h
+              change24h: data[cgId].usd_24h_change || asset.change24h
             };
           }
           return asset;
         })
       })));
-    } catch (error) {
-      console.warn('Price update skipped', error);
+    } catch (error) { 
+      // Молча оставляем старые цены
     }
-  }, []);
+  }, [activeWallet.assets]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await fetchPrices();
+    await Promise.all([fetchPrices(true), fetchRubRate()]);
     await new Promise(resolve => setTimeout(resolve, 800));
     setIsRefreshing(false);
   };
 
   useEffect(() => {
     fetchPrices();
-    const interval = setInterval(fetchPrices, 60000);
+    fetchRubRate();
+    const interval = setInterval(() => { fetchPrices(); fetchRubRate(); }, 60000);
     return () => clearInterval(interval);
   }, [fetchPrices]);
 
@@ -130,14 +147,24 @@ const App: React.FC = () => {
     localStorage.setItem('demo_active_wallet_id', activeWalletId);
     localStorage.setItem('demo_wallet_lang', language);
     localStorage.setItem('demo_wallet_theme', theme);
+    localStorage.setItem('demo_wallet_currency', currency);
     
     const root = window.document.documentElement;
-    theme === 'dark' ? root.classList.add('dark') : root.classList.remove('dark');
-  }, [wallets, activeWalletId, language, theme]);
+    if (theme === 'dark') root.classList.add('dark');
+    else root.classList.remove('dark');
+  }, [wallets, activeWalletId, language, theme, currency]);
+
+  const formatPrice = useCallback((usdAmount: number) => {
+    const amount = currency === 'USD' ? usdAmount : usdAmount * rubRate;
+    const symbol = currency === 'USD' ? '$' : '₽';
+    // Для цен используем компактный формат, если число большое
+    const digits = amount < 1 ? 4 : 2;
+    return `${amount.toLocaleString('ru-RU', { minimumFractionDigits: digits, maximumFractionDigits: digits })} ${symbol}`;
+  }, [currency, rubRate]);
 
   const totalBalance = useMemo(() => {
     if (!activeWallet || !activeWallet.assets) return 0;
-    return activeWallet.assets.reduce((acc, asset) => acc + ((asset.balance || 0) * (asset.priceUsd || 0)), 0);
+    return activeWallet.assets.reduce((acc, asset) => acc + (asset.balance * asset.priceUsd), 0);
   }, [activeWallet]);
 
   const navigateTo = (view: View, assetId: string | null = null) => {
@@ -145,23 +172,11 @@ const App: React.FC = () => {
     setActiveView(view);
   };
 
-  const handleUpdateBalance = (assetId: string, newBalance: number) => {
-    setWallets(prev => prev.map(w => {
-      if (w.id === activeWalletId) {
-        return {
-          ...w,
-          assets: w.assets.map(a => a.id === assetId ? { ...a, balance: newBalance } : a)
-        };
-      }
-      return w;
-    }));
-  };
-
   const handleAddTransaction = (tx: Transaction) => {
     const fullTx: Transaction = {
       ...tx,
-      hash: `0x${Math.random().toString(16).slice(2, 10)}${Math.random().toString(16).slice(2, 10)}...`,
-      networkFee: (Math.random() * 2 + 0.1).toFixed(2) + ' USD'
+      hash: `0x${Math.random().toString(16).slice(2, 12)}${Math.random().toString(16).slice(2, 12)}...`,
+      networkFee: '0.85 USD'
     };
     
     setWallets(prev => prev.map(w => {
@@ -176,120 +191,101 @@ const App: React.FC = () => {
           }
           return a;
         });
-        const currentTxs = Array.isArray(w.transactions) ? w.transactions : [];
-        return { ...w, assets: updatedAssets, transactions: [fullTx, ...currentTxs] };
+        return { ...w, assets: updatedAssets, transactions: [fullTx, ...(w.transactions || [])] };
       }
       return w;
     }));
   };
 
-  const handleCreateWallet = () => {
-    const newId = `wallet-${Date.now()}`;
-    const newWallet: Wallet = {
-      id: newId,
-      name: `${language === 'ru' ? 'Кошелек' : 'Wallet'} ${wallets.length + 1}`,
-      assets: INITIAL_ASSETS.map(a => ({ ...a, balance: 0 })),
-      transactions: []
-    };
-    setWallets([...wallets, newWallet]);
-    setActiveWalletId(newId);
-  };
+  const handleBuyToken = (tokenData: any, usdtAmount: number) => {
+    const usdtAsset = activeWallet.assets.find(a => a.id === 'usdt-tron');
+    if (!usdtAsset || usdtAsset.balance < usdtAmount) {
+      alert(language === 'ru' ? 'Недостаточно USDT!' : 'Insufficient USDT!');
+      return;
+    }
 
-  const handleDeleteWallet = (id: string) => {
-    if (wallets.length <= 1) return;
-    const newWallets = wallets.filter(w => w.id !== id);
-    setWallets(newWallets);
-    if (activeWalletId === id) setActiveWalletId(newWallets[0].id);
-  };
+    const tokenAmount = usdtAmount / tokenData.current_price;
+    const existingAsset = activeWallet.assets.find(a => a.id === tokenData.id);
 
-  const handleReset = () => {
-    setWallets(prev => prev.map(w => ({
-      ...w,
-      assets: w.assets.map(a => ({ ...a, balance: 0 })),
-      transactions: []
-    })));
+    setWallets(prev => prev.map(w => {
+      if (w.id === activeWalletId) {
+        let newAssets = w.assets.map(a => {
+          if (a.id === 'usdt-tron') return { ...a, balance: a.balance - usdtAmount };
+          if (a.id === tokenData.id) return { ...a, balance: a.balance + tokenAmount };
+          return a;
+        });
+
+        if (!existingAsset) {
+          const newAsset: Asset = {
+            id: tokenData.id,
+            name: tokenData.name,
+            symbol: tokenData.symbol.toUpperCase(),
+            network: 'Mainnet',
+            balance: tokenAmount,
+            priceUsd: tokenData.current_price,
+            change24h: tokenData.price_change_percentage_24h,
+            icon: tokenData.symbol.toUpperCase(),
+            logoUrl: tokenData.image,
+            color: '#3262F1'
+          };
+          newAssets.push(newAsset);
+        }
+
+        const tx: Transaction = {
+          id: Math.random().toString(36).substr(2, 9),
+          assetId: 'usdt-tron',
+          toAssetId: tokenData.id,
+          type: 'swap',
+          amount: usdtAmount,
+          toAmount: tokenAmount,
+          timestamp: Date.now(),
+          status: 'confirmed',
+          hash: `0x${Math.random().toString(16).slice(2, 10)}...`
+        };
+
+        return { ...w, assets: newAssets, transactions: [tx, ...(w.transactions || [])] };
+      }
+      return w;
+    }));
+    
+    // Удален алерт о покупке для более плавного UX, достаточно перехода в историю или обновления баланса
   };
 
   const renderView = () => {
-    if (!activeWallet) return <div className="h-full bg-white dark:bg-black" />;
-
+    if (!activeWallet) return <div className="h-full bg-white dark:bg-dark-bg" />;
     switch (activeView) {
       case 'wallet':
-        return (
-          <WalletDashboard 
-            assets={sortedAssets} 
-            totalBalance={totalBalance} 
-            walletName={activeWallet.name}
-            sortOrder={sortOrder}
-            onSortChange={setSortOrder}
-            t={t}
-            isRefreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            onAction={(view, assetId) => navigateTo(view, assetId)} 
-          />
-        );
+        return <WalletDashboard assets={sortedAssets} totalBalance={totalBalance} walletName={activeWallet.name} sortOrder={sortOrder} onSortChange={setSortOrder} t={t} isRefreshing={isRefreshing} onRefresh={handleRefresh} formatPrice={formatPrice} onAction={(view, assetId) => navigateTo(view, assetId)} />;
       case 'asset-detail':
         const selectedAsset = activeWallet.assets.find(a => a.id === selectedAssetId);
-        const walletTxs = Array.isArray(activeWallet.transactions) ? activeWallet.transactions : [];
-        return (
-          <AssetDetailView 
-            asset={selectedAsset}
-            transactions={walletTxs.filter(tx => tx.assetId === selectedAssetId || tx.toAssetId === selectedAssetId)}
-            onBack={() => navigateTo('wallet')}
-            onAction={(view) => navigateTo(view, selectedAssetId)}
-            t={t}
-            language={language}
-          />
-        );
+        return <AssetDetailView asset={selectedAsset} transactions={activeWallet.transactions.filter(tx => tx.assetId === selectedAssetId || tx.toAssetId === selectedAssetId)} onBack={() => navigateTo('wallet')} onAction={(view) => navigateTo(view, selectedAssetId)} t={t} formatPrice={formatPrice} language={language} allAssets={activeWallet.assets} />;
       case 'send':
         return <SendView assets={activeWallet.assets} initialAssetId={selectedAssetId} onBack={() => navigateTo('wallet')} onSend={handleAddTransaction} t={t} />;
       case 'receive':
         return <ReceiveView assets={activeWallet.assets} initialAssetId={selectedAssetId} onBack={() => navigateTo('wallet')} onSimulateReceive={handleAddTransaction} t={t} />;
       case 'top-up':
-        return <TopUpView assets={activeWallet.assets} onBack={() => navigateTo('wallet')} onUpdate={handleUpdateBalance} language={language} />;
+        return <TopUpView assets={activeWallet.assets} onBack={() => navigateTo('wallet')} onUpdate={(id, bal) => setWallets(prev => prev.map(w => w.id === activeWalletId ? {...w, assets: w.assets.map(a => a.id === id ? {...a, balance: bal} : a)} : w))} language={language} />;
       case 'swap':
-        return <SwapView assets={activeWallet.assets} onBack={() => navigateTo('wallet')} onSwap={handleAddTransaction} t={t} language={language} />;
+        return <SwapView assets={activeWallet.assets} onBack={() => navigateTo('wallet')} onSwap={handleAddTransaction} t={t} language={language} formatPrice={formatPrice} />;
       case 'history':
-        return <HistoryView transactions={activeWallet.transactions} assets={activeWallet.assets} onBack={() => navigateTo('wallet')} t={t} language={language} />;
+        return <HistoryView transactions={activeWallet.transactions} assets={activeWallet.assets} onBack={() => navigateTo('wallet')} t={t} formatPrice={formatPrice} language={language} />;
       case 'settings':
-        return (
-          <SettingsView 
-            onBack={() => navigateTo('wallet')} 
-            language={language} 
-            onLanguageChange={setLanguage} 
-            theme={theme} 
-            onThemeChange={setTheme} 
-            onReset={handleReset}
-            t={t} 
-          />
-        );
+        return <SettingsView onBack={() => navigateTo('wallet')} language={language} onLanguageChange={setLanguage} theme={theme} onThemeChange={setTheme} currency={currency} onCurrencyChange={setCurrency} onReset={() => setWallets([{id:'wallet-1', name: 'Main', assets: INITIAL_ASSETS, transactions: []}])} t={t} />;
+      case 'discover':
+        return <DiscoverView onBuy={handleBuyToken} usdtBalance={activeWallet.assets.find(a => a.id === 'usdt-tron')?.balance || 0} language={language} />;
       default:
-        return <div className="p-10 text-center text-zinc-500 animate-fade-in">View in development</div>;
+        return <div className="p-10 text-center text-zinc-500">В разработке</div>;
     }
   };
 
   return (
-    <div className={`flex justify-center min-h-screen transition-colors duration-500 ${theme === 'dark' ? 'bg-black' : 'bg-zinc-100'}`}>
-      <div className="w-full max-w-[430px] h-screen bg-white dark:bg-black flex flex-col relative overflow-hidden shadow-2xl border-x border-zinc-200 dark:border-zinc-900 pt-safe pb-safe">
+    <div className={`flex justify-center min-h-screen transition-colors duration-500 ${theme === 'dark' ? 'bg-[#0a0a0b]' : 'bg-zinc-100'}`}>
+      <div className="w-full max-w-[430px] h-screen bg-white dark:bg-dark-bg flex flex-col relative overflow-hidden shadow-2xl border-x border-zinc-200 dark:border-dark-border pt-safe pb-safe soft-bg-glow">
         <main className="flex-1 overflow-y-auto ios-scroll no-scrollbar relative">
-          <div key={activeView} className="h-full w-full absolute inset-0 overflow-hidden">
+          <div key={activeView} className="h-full w-full absolute inset-0 overflow-hidden view-transition-enter">
             {renderView()}
           </div>
         </main>
-
-        {activeView === 'wallet-manager' && (
-          <WalletManagerView 
-            wallets={wallets}
-            activeWalletId={activeWalletId}
-            onSelect={(id) => { setActiveWalletId(id); setActiveView('wallet'); }}
-            onCreate={handleCreateWallet}
-            onDelete={handleDeleteWallet}
-            onClose={() => setActiveView('wallet')}
-            t={t}
-            language={language}
-          />
-        )}
-
         {['wallet', 'swap', 'discover', 'settings'].includes(activeView) && (
           <BottomNav activeView={activeView} onViewChange={(view) => navigateTo(view)} t={t} />
         )}

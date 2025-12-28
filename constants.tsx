@@ -7,6 +7,19 @@ export const USER_ADDRESSES = {
   tron: 'TWs9Uo232Yx6yF13o57v3q8mD9nUo3vW2v'
 };
 
+// Карта соответствия наших ID и ID в CoinGecko
+export const CG_ID_MAP: Record<string, string> = {
+  'bitcoin': 'bitcoin',
+  'eth': 'ethereum',
+  'tron': 'tron',
+  'usdt-tron': 'tether',
+  'solana': 'solana',
+  'binancecoin': 'binancecoin',
+  'ripple': 'ripple',
+  'dogecoin': 'dogecoin',
+  'cardano': 'cardano'
+};
+
 export const INITIAL_ASSETS: Asset[] = [
   {
     id: 'usdt-tron',
@@ -57,4 +70,16 @@ export const INITIAL_ASSETS: Asset[] = [
     logoUrl: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png',
     color: '#F7931A'
   }
+];
+
+// Резервный список ТОП-токенов, если API CoinGecko не отвечает
+export const FALLBACK_MARKET_DATA = [
+  { id: 'bitcoin', name: 'Bitcoin', symbol: 'btc', current_price: 64230.50, price_change_percentage_24h: 2.15, image: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png' },
+  { id: 'ethereum', name: 'Ethereum', symbol: 'eth', current_price: 3240.15, price_change_percentage_24h: -0.44, image: 'https://cryptologos.cc/logos/ethereum-eth-logo.png' },
+  { id: 'solana', name: 'Solana', symbol: 'sol', current_price: 145.20, price_change_percentage_24h: 5.12, image: 'https://cryptologos.cc/logos/solana-sol-logo.png' },
+  { id: 'binancecoin', name: 'BNB', symbol: 'bnb', current_price: 580.40, price_change_percentage_24h: 1.20, image: 'https://cryptologos.cc/logos/bnb-bnb-logo.png' },
+  { id: 'ripple', name: 'XRP', symbol: 'xrp', current_price: 0.62, price_change_percentage_24h: -1.15, image: 'https://cryptologos.cc/logos/xrp-xrp-logo.png' },
+  { id: 'dogecoin', name: 'Dogecoin', symbol: 'doge', current_price: 0.16, price_change_percentage_24h: 12.45, image: 'https://cryptologos.cc/logos/dogecoin-doge-logo.png' },
+  { id: 'cardano', name: 'Cardano', symbol: 'ada', current_price: 0.45, price_change_percentage_24h: 0.50, image: 'https://cryptologos.cc/logos/cardano-ada-logo.png' },
+  { id: 'tron', name: 'TRON', symbol: 'trx', current_price: 0.12, price_change_percentage_24h: 1.25, image: 'https://cryptologos.cc/logos/tron-trx-logo.png' }
 ];

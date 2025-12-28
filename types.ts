@@ -38,5 +38,6 @@ export interface Wallet {
 export type SortOrder = 'default' | 'asc' | 'desc';
 export type Language = 'en' | 'ru';
 export type Theme = 'light' | 'dark';
+export type Currency = 'USD' | 'RUB';
 
 export type View = 'wallet' | 'swap' | 'discover' | 'settings' | 'send' | 'receive' | 'top-up' | 'history' | 'asset-detail' | 'wallet-manager' | 'rewards' | 'more';

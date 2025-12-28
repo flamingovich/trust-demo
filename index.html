@@ -12,24 +12,27 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Outfit', 'sans-serif'],
+                        sans: ['Manrope', 'sans-serif'],
+                    },
+                    colors: {
+                        dark: {
+                            bg: '#121214',
+                            surface: '#1A1A1C',
+                            elevated: '#252528',
+                            border: 'rgba(255, 255, 255, 0.08)'
+                        }
                     },
                     animation: {
-                        'ios-slide-in': 'iosSlideIn 0.45s cubic-bezier(0.32, 1, 0.2, 1) forwards',
-                        'ios-slide-out': 'iosSlideOut 0.45s cubic-bezier(0.32, 1, 0.2, 1) forwards',
-                        'ios-bottom-up': 'iosBottomUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-                        'fade-in': 'fadeIn 0.3s ease-out forwards',
-                        'scale-in': 'scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
-                        'bounce-subtle': 'bounceSubtle 2s infinite',
+                        'ios-slide-in': 'iosSlideIn 0.4s cubic-bezier(0.32, 1, 0.2, 1) forwards',
+                        'ios-bottom-up': 'iosBottomUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'fade-in': 'fadeIn 0.25s ease-out forwards',
+                        'scale-in': 'scaleIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+                        'pop-in': 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
                     },
                     keyframes: {
                         iosSlideIn: {
-                            '0%': { transform: 'translateX(100%)', opacity: '0.5' },
+                            '0%': { transform: 'translateX(30px)', opacity: '0' },
                             '100%': { transform: 'translateX(0)', opacity: '1' }
-                        },
-                        iosSlideOut: {
-                            '0%': { transform: 'translateX(0)', opacity: '1' },
-                            '100%': { transform: 'translateX(-20%)', opacity: '0' }
                         },
                         iosBottomUp: {
                             '0%': { transform: 'translateY(100%)' },
@@ -40,12 +43,12 @@
                             '100%': { opacity: '1' }
                         },
                         scaleIn: {
-                            '0%': { transform: 'scale(0.95)', opacity: '0' },
+                            '0%': { transform: 'scale(0.9)', opacity: '0' },
                             '100%': { transform: 'scale(1)', opacity: '1' }
                         },
-                        bounceSubtle: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-4px)' }
+                        popIn: {
+                            '0%': { transform: 'scale(0.85)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
                         }
                     }
                 },
@@ -54,21 +57,21 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --app-blue: #3262F1;
         }
         body {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Manrope', sans-serif;
             -webkit-tap-highlight-color: transparent;
             overflow: hidden;
-            letter-spacing: -0.015em;
+            letter-spacing: -0.01em;
             height: 100vh;
-            background-color: #f3f4f6;
+            background-color: #f8f9fa;
         }
         .dark body {
-            background-color: #000000;
+            background-color: #121214;
         }
         .ios-scroll {
             -webkit-overflow-scrolling: touch;
@@ -76,31 +79,45 @@
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
         .btn-press:active {
-            transform: scale(0.94);
-            opacity: 0.85;
+            transform: scale(0.96);
+            opacity: 0.9;
             transition: transform 0.1s ease;
         }
-        .transition-professional {
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
         .glass-panel {
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
         }
-
         .pb-safe {
             padding-bottom: env(safe-area-inset-bottom);
         }
-
-        /* Prevent overscroll bounce on body but keep on containers */
         html, body {
             overscroll-behavior: none;
+        }
+        h1, h2, h3 {
+            letter-spacing: -0.025em;
+        }
+        .view-transition-enter {
+            animation: iosSlideIn 0.4s cubic-bezier(0.32, 1, 0.2, 1) forwards;
+        }
+        /* Блокировка ориентации (визуальная) */
+        @media screen and (orientation: landscape) and (max-height: 500px) {
+            #orientation-lock {
+                display: flex !important;
+            }
+        }
+        #orientation-lock {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #121214;
+            color: white;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
         }
     </style>
 <script type="importmap">
@@ -116,7 +133,14 @@
 }
 </script>
 </head>
-<body class="transition-colors duration-300">
+<body class="transition-colors duration-500">
+    <div id="orientation-lock">
+        <div class="animate-bounce mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+        </div>
+        <p class="font-bold text-lg">Пожалуйста, используйте вертикальный режим</p>
+        <p class="text-sm text-zinc-500 mt-2">Приложение оптимизировано для портретной ориентации</p>
+    </div>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>
