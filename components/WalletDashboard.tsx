@@ -82,7 +82,7 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
         </button>
         <button onClick={() => onAction('wallet-manager')} className="flex items-center space-x-1 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 btn-press transition-all">
           <span className="text-[14px] font-semibold tracking-tight">{walletName}</span>
-          <ChevronDown size={14} strokeWidth={2} />
+          <ChevronDown size={14} strokeWidth={2.5} />
         </button>
         <button className="p-2 text-zinc-500 dark:text-zinc-400 btn-press">
           <Copy size={20} strokeWidth={1.5} />
@@ -97,7 +97,7 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
           {formatCurrency(totalBalance)} $
         </h1>
         <div className="flex items-center justify-center space-x-1.5 text-green-600 dark:text-green-500 font-semibold text-sm bg-green-500/5 py-1 px-3 rounded-full w-fit mx-auto">
-          <Plus size={14} strokeWidth={2} />
+          <Plus size={14} strokeWidth={2.5} />
           <span>1,17 $ (+0,08%)</span>
         </div>
       </div>
@@ -115,7 +115,7 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
               onClick={() => action.view && onAction(action.view)} 
               className={`w-[56px] h-[56px] ${action.bg} rounded-[22px] flex items-center justify-center transition-all active:scale-90 shadow-sm`}
             >
-              <action.icon size={22} strokeWidth={2} />
+              <action.icon size={22} strokeWidth={2.5} />
             </button>
             <span className="text-[12px] font-semibold text-zinc-900 dark:text-zinc-200">{action.label}</span>
           </div>
