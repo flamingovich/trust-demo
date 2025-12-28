@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Asset, Transaction } from '../types';
 import { ChevronLeft, QrCode, ShieldCheck, X, ChevronDown, CheckCircle2, Clipboard, Loader2, Info } from 'lucide-react';
 import { USER_ADDRESSES } from '../constants';
@@ -42,7 +42,16 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
   const [isSuccess, setIsSuccess] = useState(false);
   const [statusMessage, setStatusMessage] = useState('Blockchain validation in progress...');
 
-  const usdValue = amount ? formatUSD(parseFloat(amount) * (asset?.priceUsd || 0)) : '0,00';
+  // Get real TRX price from assets list for fee calculation
+  const trxPrice = useMemo(() => {
+    const trx = assets.find(a => a.id === 'tron');
+    return trx ? trx.priceUsd : 0.15; // fallback to 0.15 if not found
+  }, [assets]);
+
+  const usdValue = useMemo(() => {
+    const val = amount ? parseFloat(amount) * (asset?.priceUsd || 0) : 0;
+    return formatUSD(val);
+  }, [amount, asset]);
 
   const handleNext = () => {
     const numAmount = parseFloat(amount);
@@ -58,6 +67,9 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
       console.debug('Clipboard access denied');
     }
   };
+
+  const feeTRX = 1.0;
+  const feeUSD = (feeTRX * trxPrice).toFixed(2);
 
   const handleFinalSend = () => {
     setIsProcessing(true);
@@ -76,7 +88,7 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
         timestamp: Date.now(),
         status: 'confirmed',
         hash: `0x${Math.random().toString(16).slice(2, 10)}...`,
-        networkFee: '1 TRX (0.15 USD)'
+        networkFee: `${feeTRX} TRX (${feeUSD} USD)`
       });
       setIsProcessing(false);
       setIsSuccess(true);
@@ -109,13 +121,13 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
   if (isProcessing) {
     return (
       <div className="h-full flex flex-col items-center justify-center bg-white dark:bg-black p-10 animate-fade-in text-black dark:text-white">
-        <div className="relative w-20 h-20 mb-10 flex items-center justify-center">
-            <Loader2 className="animate-spin text-blue-600" size={56} strokeWidth={3} />
+        <div className="relative w-24 h-24 mb-10 flex items-center justify-center">
+            <Loader2 className="animate-spin text-blue-600" size={64} strokeWidth={2.5} />
         </div>
         <h2 className="text-2xl font-bold tracking-tight text-center">{t.processing}</h2>
-        <div className="mt-4 space-y-1.5 flex flex-col items-center">
-            <p className="text-zinc-500 text-sm font-bold opacity-70 animate-pulse">{statusMessage}</p>
-            <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest opacity-50">Estimated: ~5s</p>
+        <div className="mt-4 space-y-2 flex flex-col items-center">
+            <p className="text-zinc-500 text-[15px] font-bold opacity-70 animate-pulse">{statusMessage}</p>
+            <p className="text-zinc-400 text-[11px] font-bold uppercase tracking-[0.2em] opacity-40">Blockchain Network Delay: 3-5s</p>
         </div>
       </div>
     );
@@ -124,80 +136,79 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
   if (isConfirming) {
     const fromAddr = getUserAddress();
     const truncatedFrom = `${fromAddr.slice(0, 6)}...${fromAddr.slice(-4)}`;
-    const feeTRX = 1.0;
-    const feeUSD = 0.15;
     const amountVal = parseFloat(amount);
-    const totalUSD = (amountVal * asset.priceUsd) + feeUSD;
 
     return (
-      <div className="h-full flex flex-col bg-white dark:bg-black text-black dark:text-white animate-ios-slide-in">
-        <div className="flex items-center justify-between p-6 pt-12 shrink-0 border-b border-zinc-50 dark:border-white/5">
-          <button onClick={() => setIsConfirming(false)} className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-900 btn-press">
-            <ChevronLeft size={24} strokeWidth={2.5} />
+      <div className="h-full flex flex-col bg-white dark:bg-[#FBFCFD] text-black animate-ios-slide-in">
+        <div className="flex items-center justify-between p-6 pt-12 shrink-0">
+          <button onClick={() => setIsConfirming(false)} className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-100 btn-press">
+            <ChevronLeft size={24} strokeWidth={2} />
           </button>
-          <h2 className="text-[17px] font-bold tracking-tight">Summary</h2>
+          <h2 className="text-[17px] font-bold tracking-tight text-zinc-900">{t.summary}</h2>
           <div className="w-10"></div>
         </div>
 
-        <div className="flex-1 px-6 flex flex-col pt-10 overflow-y-auto no-scrollbar pb-10">
-          <div className="flex flex-col items-center mb-10">
-            <h1 className="text-[48px] font-extrabold tracking-tight text-center flex items-center justify-center space-x-3">
+        <div className="flex-1 px-5 flex flex-col pt-12 overflow-y-auto no-scrollbar pb-32">
+          <div className="flex flex-col items-center mb-12">
+            <h1 className="text-[48px] font-bold tracking-tight text-center flex items-center justify-center space-x-3 text-[#1A1C1E]">
               <span>{formatValue(amountVal)}</span>
-              <span className="text-zinc-400 font-bold text-3xl">{asset.symbol}</span>
+              <span className="text-[#A2ABB8] font-medium text-4xl">{asset.symbol}</span>
             </h1>
-            <p className="text-zinc-400 font-bold text-lg opacity-80">≈ {usdValue} USD</p>
+            <p className="text-[#A2ABB8] font-bold text-lg">≈ {usdValue} USD</p>
           </div>
 
-          <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-white/5 rounded-[36px] overflow-hidden shadow-sm">
+          <div className="bg-white border border-zinc-100 rounded-[32px] overflow-hidden shadow-[0_2px_15px_-3px_rgba(0,0,0,0.04)]">
             <div className="p-6 space-y-6">
               <div className="flex justify-between items-center">
-                <p className="text-zinc-400 text-[11px] font-bold uppercase tracking-[0.2em]">{t.asset}</p>
+                <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em]">{t.asset}</p>
                 <div className="flex items-center space-x-2.5">
                   <img src={asset.logoUrl} className="w-6 h-6 object-contain rounded-[22%]" alt="" />
-                  <span className="font-bold text-[14px]">{asset.name}</span>
+                  <span className="font-bold text-[14px] text-[#1A1C1E]">{asset.symbol}</span>
                 </div>
               </div>
 
-              <div className="flex justify-between items-start pt-5 border-t border-zinc-200/50 dark:border-white/5">
-                <p className="text-zinc-400 text-[11px] font-bold uppercase tracking-[0.2em] mt-1">From</p>
+              <div className="flex justify-between items-start pt-6 border-t border-zinc-50">
+                <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em] mt-1">{t.from}</p>
                 <div className="text-right">
-                    <p className="font-bold text-[14px] text-zinc-900 dark:text-zinc-100">{walletName}</p>
-                    <p className="font-mono text-[11px] text-zinc-400 font-bold tracking-tight">{truncatedFrom}</p>
+                    <p className="font-bold text-[14px] text-[#1A1C1E]">{walletName}</p>
+                    <p className="font-mono text-[11px] text-[#A2ABB8] font-bold tracking-tight">{truncatedFrom}</p>
                 </div>
               </div>
 
-              <div className="flex justify-between items-start pt-5 border-t border-zinc-200/50 dark:border-white/5">
-                <p className="text-zinc-400 text-[11px] font-bold uppercase tracking-[0.2em] mt-1">To</p>
-                <p className="font-mono text-[11px] break-all text-zinc-800 dark:text-zinc-200 leading-relaxed font-bold text-right max-w-[220px]">
-                    {address}
-                </p>
+              <div className="flex justify-between items-start pt-6 border-t border-zinc-50">
+                <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em] mt-1">{t.to}</p>
+                <div className="text-right max-w-[200px]">
+                  <p className="font-mono text-[11px] break-all text-[#1A1C1E] leading-relaxed font-bold">
+                      {address}
+                  </p>
+                </div>
               </div>
 
-              <div className="flex justify-between items-center pt-5 border-t border-zinc-200/50 dark:border-white/5">
+              <div className="flex justify-between items-center pt-6 border-t border-zinc-50">
                 <div className="flex items-center space-x-1">
-                   <p className="text-zinc-400 text-[11px] font-bold uppercase tracking-[0.2em]">{t.networkFee}</p>
-                   <Info size={12} className="text-zinc-300" />
+                   <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em]">{t.networkFee}</p>
+                   <Info size={12} className="text-[#D1D8E0]" />
                 </div>
-                <p className="font-bold text-zinc-800 dark:text-zinc-200 text-[14px]">
-                  {feeTRX} TRX <span className="text-zinc-400 ml-1">(${feeUSD})</span>
+                <p className="font-bold text-[#1A1C1E] text-[14px]">
+                  {feeTRX} TRX <span className="text-[#A2ABB8] font-medium ml-1">(${feeUSD})</span>
                 </p>
               </div>
             </div>
             
-            <div className="bg-zinc-100/50 dark:bg-zinc-800/30 p-6 flex justify-between items-center border-t border-zinc-200/50 dark:border-white/5">
-                <p className="text-zinc-500 text-[11px] font-bold uppercase tracking-[0.2em]">Max Total</p>
-                <p className="font-extrabold text-[17px] text-blue-600 dark:text-blue-500">
-                  {amountVal} {asset.symbol} + {feeTRX} TRX
+            <div className="bg-[#F8FAFC]/50 p-6 flex justify-between items-center border-t border-zinc-50">
+                <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em]">{t.maxTotal}</p>
+                <p className="font-bold text-[15px] text-[#3262F1]">
+                  {formatValue(amountVal)} {asset.symbol} + {feeTRX} TRX
                 </p>
             </div>
           </div>
 
-          <div className="mt-auto pt-10">
+          <div className="fixed bottom-10 left-0 right-0 px-8 flex justify-center">
             <button 
               onClick={handleFinalSend}
-              className="w-full py-5.5 bg-blue-600 text-white rounded-[28px] font-bold text-lg shadow-xl shadow-blue-600/30 btn-press active:scale-95 transition-all"
+              className="w-full max-w-[360px] py-4.5 bg-[#3262F1] text-white rounded-full font-bold text-[17px] shadow-[0_8px_25px_-5px_rgba(50,98,241,0.4)] btn-press active:scale-95 transition-all"
             >
-              Confirm
+              {t.confirm}
             </button>
           </div>
         </div>
@@ -299,11 +310,7 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
           <button 
             disabled={!address || !amount || parseFloat(amount) > asset.balance}
             onClick={handleNext}
-            className={`w-full py-5 rounded-[26px] font-bold text-lg transition-all shadow-xl ${
-              !address || !amount || parseFloat(amount) > asset.balance
-              ? 'bg-zinc-100 dark:bg-zinc-900 text-zinc-400 dark:text-zinc-600 cursor-not-allowed border border-zinc-200 dark:border-white/5 shadow-none' 
-              : 'bg-blue-600 text-white shadow-blue-600/30 btn-press active:scale-95'
-            }`}
+            className="w-full py-5 bg-blue-600 text-white rounded-[26px] font-bold text-lg transition-all shadow-xl shadow-blue-600/30 btn-press active:scale-95 disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none"
           >
             {parseFloat(amount) > asset.balance ? t.insufficient : t.send}
           </button>

@@ -46,7 +46,11 @@ export const translations = {
     block: "Block",
     cancel: "Cancel",
     currency: "Currency",
-    resetWallet: "Reset Wallet"
+    resetWallet: "Reset Wallet",
+    summary: "Summary",
+    from: "FROM",
+    to: "TO",
+    maxTotal: "MAX TOTAL"
   },
   ru: {
     wallet: "Кошелек",
@@ -61,7 +65,7 @@ export const translations = {
     trade: "Торговля",
     rewards: "Награды",
     more: "Еще",
-    mainWallet: "Основной ко...",
+    mainWallet: "Основной кошелек",
     totalBalance: "Общий баланс",
     today: "Сегодня",
     send: "Отправить",
@@ -89,11 +93,15 @@ export const translations = {
     txDetails: "Детали",
     status: "Статус",
     date: "Дата",
-    networkFee: "Комиссия",
+    networkFee: "КОМИССИЯ",
     txHash: "Хэш",
     block: "Блок",
     cancel: "Отмена",
     currency: "Валюта",
-    resetWallet: "Сбросить данные"
+    resetWallet: "Сбросить данные",
+    summary: "Summary",
+    from: "FROM",
+    to: "TO",
+    maxTotal: "MAX TOTAL"
   }
 };
