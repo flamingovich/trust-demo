@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Asset, View, SortOrder } from '../types';
-import { ArrowUpRight, Plus, Repeat, Landmark, Sprout, Settings, ScanLine, Copy, Search, ChevronDown, History, SlidersHorizontal } from 'lucide-react';
+import { ArrowUpRight, Plus, Repeat, Landmark, Sprout, Settings, ScanLine, Copy, Search, ChevronDown, History, SlidersHorizontal, Loader2 } from 'lucide-react';
 
 interface Props {
   assets: Asset[];
@@ -9,6 +9,8 @@ interface Props {
   sortOrder: SortOrder;
   onSortChange: (order: SortOrder) => void;
   onAction: (view: View, assetId?: string) => void;
+  onRefresh: () => void;
+  isRefreshing: boolean;
   t: any;
 }
 
@@ -26,15 +28,70 @@ const formatToken = (val: number) => {
   }).format(val);
 };
 
-const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, sortOrder, onSortChange, onAction, t }) => {
+const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, sortOrder, onSortChange, onAction, onRefresh, isRefreshing, t }) => {
+  const [pullDistance, setPullDistance] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const touchStartRef = useRef(0);
+  const isPulling = useRef(false);
+
   const toggleSort = () => {
     if (sortOrder === 'default') onSortChange('desc');
     else if (sortOrder === 'desc') onSortChange('asc');
     else onSortChange('default');
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (containerRef.current?.scrollTop === 0) {
+      touchStartRef.current = e.touches[0].clientY;
+      isPulling.current = true;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isPulling.current) return;
+    const currentY = e.touches[0].clientY;
+    const distance = currentY - touchStartRef.current;
+    
+    if (distance > 0) {
+      // Apply some resistance
+      const dampedDistance = Math.min(distance * 0.4, 80);
+      setPullDistance(dampedDistance);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (pullDistance > 60) {
+      onRefresh();
+    }
+    setPullDistance(0);
+    isPulling.current = false;
+  };
+
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-black text-black dark:text-white transition-colors duration-300">
+    <div 
+      ref={containerRef}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      className="flex flex-col h-full bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 relative"
+      style={{ transform: `translateY(${pullDistance}px)`, transition: pullDistance === 0 ? 'transform 0.3s ease-out' : 'none' }}
+    >
+      {/* Pull to refresh indicator */}
+      <div 
+        className="absolute left-0 right-0 flex justify-center pointer-events-none"
+        style={{ top: -40, opacity: Math.min(pullDistance / 40, 1) }}
+      >
+        <Loader2 className={`text-blue-600 ${isRefreshing || pullDistance > 60 ? 'animate-spin' : ''}`} size={24} />
+      </div>
+
+      {isRefreshing && pullDistance === 0 && (
+        <div className="absolute top-16 left-0 right-0 flex justify-center z-50">
+          <div className="bg-white dark:bg-zinc-900 rounded-full p-2 shadow-lg border border-zinc-100 dark:border-zinc-800 animate-bounce">
+            <Loader2 className="text-blue-600 animate-spin" size={20} />
+          </div>
+        </div>
+      )}
+
       {/* Top Navigation */}
       <div className="px-6 pt-4 flex justify-between items-center shrink-0">
         <button onClick={() => onAction('settings')} className="p-2 text-zinc-500 dark:text-zinc-400 btn-press">

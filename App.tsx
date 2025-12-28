@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Asset, Transaction, SortOrder, Language, Theme } from './types';
 import { INITIAL_ASSETS } from './constants';
 import WalletDashboard from './components/WalletDashboard';
@@ -16,6 +16,7 @@ import { translations } from './translations';
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState<View>('wallet');
   const [sortOrder, setSortOrder] = useState<SortOrder>('default');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const [language, setLanguage] = useState<Language>(() => {
     return (localStorage.getItem('demo_wallet_lang') as Language) || 'ru';
@@ -39,41 +40,49 @@ const App: React.FC = () => {
 
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
 
-  // Real-time price updates
-  useEffect(() => {
-    const fetchPrices = async () => {
-      try {
-        const ids = 'bitcoin,ethereum,tron,tether';
-        const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`);
-        const data = await response.json();
-        
-        const mapping: Record<string, string> = {
-          'bitcoin': 'bitcoin',
-          'eth': 'ethereum',
-          'tron': 'tron',
-          'usdt-tron': 'tether'
-        };
-
-        setAssets(prev => prev.map(asset => {
-          const cgId = mapping[asset.id];
-          if (cgId && data[cgId]) {
-            return {
-              ...asset,
-              priceUsd: data[cgId].usd,
-              change24h: data[cgId].usd_24h_change || asset.change24h
-            };
-          }
-          return asset;
-        }));
-      } catch (error) {
-        console.error('Failed to fetch prices:', error);
-      }
-    };
-
-    fetchPrices();
-    const interval = setInterval(fetchPrices, 60000); // Update every minute
-    return () => clearInterval(interval);
+  const fetchPrices = useCallback(async () => {
+    try {
+      // Mapping our IDs to CoinGecko IDs
+      const mapping: Record<string, string> = {
+        'bitcoin': 'bitcoin',
+        'eth': 'ethereum',
+        'tron': 'tron',
+        'usdt-tron': 'tether'
+      };
+      
+      const cgIds = Object.values(mapping).join(',');
+      const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cgIds}&vs_currencies=usd&include_24hr_change=true`);
+      const data = await response.json();
+      
+      setAssets(prev => prev.map(asset => {
+        const cgId = mapping[asset.id];
+        if (cgId && data[cgId]) {
+          return {
+            ...asset,
+            priceUsd: data[cgId].usd,
+            change24h: data[cgId].usd_24h_change || asset.change24h
+          };
+        }
+        return asset;
+      }));
+    } catch (error) {
+      console.error('Failed to fetch prices:', error);
+    }
   }, []);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchPrices();
+    // Simulate some network delay for better UX
+    await new Promise(resolve => setTimeout(resolve, 800));
+    setIsRefreshing(false);
+  };
+
+  useEffect(() => {
+    fetchPrices();
+    const interval = setInterval(fetchPrices, 30000); // Update every 30 seconds
+    return () => clearInterval(interval);
+  }, [fetchPrices]);
 
   useEffect(() => {
     localStorage.setItem('demo_wallet_assets', JSON.stringify(assets));
@@ -139,6 +148,8 @@ const App: React.FC = () => {
             sortOrder={sortOrder}
             onSortChange={setSortOrder}
             t={t}
+            isRefreshing={isRefreshing}
+            onRefresh={handleRefresh}
             onAction={(view, assetId) => {
               setActiveView(view);
               setSelectedAssetId(assetId || null);
@@ -149,8 +160,9 @@ const App: React.FC = () => {
         return <SendView assets={assets} initialAssetId={selectedAssetId} onBack={() => setActiveView('wallet')} onSend={handleAddTransaction} t={t} />;
       case 'receive':
         return <ReceiveView assets={assets} initialAssetId={selectedAssetId} onBack={() => setActiveView('wallet')} onSimulateReceive={handleAddTransaction} t={t} />;
+      // Added language prop to SwapView
       case 'swap':
-        return <SwapView assets={assets} onBack={() => setActiveView('wallet')} onSwap={handleAddTransaction} t={t} />;
+        return <SwapView assets={assets} onBack={() => setActiveView('wallet')} onSwap={handleAddTransaction} t={t} language={language} />;
       case 'history':
         return <HistoryView transactions={transactions} assets={assets} onBack={() => setActiveView('wallet')} t={t} language={language} />;
       case 'top-up':
