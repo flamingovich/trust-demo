@@ -45,7 +45,6 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t }
 
   const handlePaste = async () => {
     try {
-      // Check if Clipboard API is available
       if (!navigator.clipboard || !navigator.clipboard.readText) {
         console.debug('Clipboard API not available');
         return;
@@ -53,7 +52,6 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t }
       const text = await navigator.clipboard.readText();
       if (text) setAddress(text);
     } catch (err) {
-      // Graceful error handling for permission denied
       console.debug('Clipboard access denied or failed');
     }
   };
@@ -196,7 +194,7 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t }
                 Bal: <span className="text-zinc-900 dark:text-zinc-100">{formatValue(asset.balance)} {asset.symbol}</span>
               </div>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center min-h-[44px]">
               <input 
                 type="number"
                 inputMode="decimal"
@@ -207,7 +205,7 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t }
               />
               <button 
                 onClick={() => setAmount(asset.balance.toString())}
-                className="text-blue-600 dark:text-blue-500 text-[11px] font-bold bg-blue-500/10 px-3.5 py-1.5 rounded-xl border border-blue-500/10 active:scale-95 transition-all ml-4"
+                className="shrink-0 text-blue-600 dark:text-blue-500 text-[11px] font-bold bg-blue-500/10 px-3 py-1.5 rounded-xl border border-blue-500/10 active:scale-95 transition-all ml-4 h-8 flex items-center justify-center"
               >
                 MAX
               </button>

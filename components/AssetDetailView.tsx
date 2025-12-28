@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Asset, Transaction, Language, View } from '../types';
-import { ChevronLeft, ArrowUpRight, Plus, Repeat, Info, ArrowDownLeft, X, ShieldCheck, ExternalLink } from 'lucide-react';
+import { ChevronLeft, ArrowUpRight, Plus, Repeat, Info, ArrowDownLeft, X, ShieldCheck, ExternalLink, Check } from 'lucide-react';
 
 interface Props {
   asset: Asset;
@@ -98,7 +98,12 @@ const AssetDetailView: React.FC<Props> = ({ asset, transactions, onBack, onActio
                       {tx.type === 'receive' ? <ArrowDownLeft size={20} className="text-green-500" strokeWidth={2} /> : tx.type === 'swap' ? <Repeat size={20} className="text-blue-500" strokeWidth={2} /> : <ArrowUpRight size={20} className="text-zinc-400" strokeWidth={2} />}
                     </div>
                     <div>
-                      <p className="font-semibold text-[15px]">{tx.type === 'receive' ? t.receive : tx.type === 'swap' ? t.swap : t.send}</p>
+                      <div className="flex items-center space-x-1.5">
+                        <p className="font-semibold text-[15px]">{tx.type === 'receive' ? t.receive : tx.type === 'swap' ? t.swap : t.send}</p>
+                        <div className="flex items-center justify-center w-3 h-3 bg-green-500 rounded-full">
+                          <Check size={7} strokeWidth={5} className="text-white" />
+                        </div>
+                      </div>
                       <p className="text-[11px] text-zinc-500 font-normal uppercase">{new Date(tx.timestamp).toLocaleDateString()}</p>
                     </div>
                   </div>
@@ -158,12 +163,12 @@ const AssetDetailView: React.FC<Props> = ({ asset, transactions, onBack, onActio
                 {selectedTx.address && (
                   <div className="flex justify-between items-start pt-4 border-t border-zinc-200/50 dark:border-white/5">
                     <span className="text-zinc-400 font-semibold uppercase text-[10px] tracking-widest mt-1">{t.recipient}</span>
-                    <span className="text-zinc-600 dark:text-zinc-300 font-mono text-[10px] break-all text-right pl-12 leading-relaxed">{selectedTx.address}</span>
+                    <span className="text-zinc-600 dark:text-zinc-300 font-mono text-[10px] break-all text-right pl-12 leading-relaxed font-semibold">{selectedTx.address}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-start pt-4 border-t border-zinc-200/50 dark:border-white/5">
                   <span className="text-zinc-400 font-semibold uppercase text-[10px] tracking-widest mt-1">{t.txHash}</span>
-                  <span className="text-blue-500 font-mono text-[10px] break-all text-right pl-12 leading-relaxed">{selectedTx.hash || '0x...'}</span>
+                  <span className="text-blue-500 font-mono text-[10px] break-all text-right pl-12 leading-relaxed font-semibold">{selectedTx.hash || '0x...'}</span>
                 </div>
                 <div className="flex justify-between items-center pt-4 border-t border-zinc-200/50 dark:border-white/5">
                   <span className="text-zinc-400 font-semibold uppercase text-[10px] tracking-widest">{t.networkFee}</span>
