@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { Transaction, Asset, Language } from '../types';
-// Added 'History' to lucide-react imports to avoid conflict with the browser's global History object
 import { ChevronLeft, ArrowUpRight, ArrowDownLeft, CheckCircle2, Star, X, ShieldCheck, Copy, ExternalLink, Repeat, History } from 'lucide-react';
 
 interface Props {
@@ -12,23 +11,19 @@ interface Props {
   language: Language;
 }
 
+const formatValue = (val: number, maxDecimals: number = 4) => {
+  return val.toLocaleString('ru-RU', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maxDecimals,
+  });
+};
+
 const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, language }) => {
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const getAsset = (id: string) => assets.find(a => a.id === id);
 
-  const formatAmount = (val: number) => {
-    return new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 8,
-    }).format(val);
-  };
-
-  const formatUSD = (val: number) => {
-    return new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(val);
-  };
+  const formatAmount = (val: number) => formatValue(val, 4);
+  const formatUSD = (val: number) => formatValue(val, 2);
 
   const formatDateLabel = (timestamp: number) => {
     const d = new Date(timestamp);
@@ -48,13 +43,13 @@ const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, languag
 
   return (
     <div className="h-full bg-white dark:bg-black text-black dark:text-white flex flex-col animate-spring-slide relative transition-colors duration-300">
-      <div className="px-4 pt-12 pb-4 flex items-center justify-between shrink-0">
+      <div className="px-4 pt-4 pb-4 flex items-center justify-between shrink-0">
         <button onClick={onBack} className="p-3 text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-900 rounded-full btn-press">
           <ChevronLeft size={24} />
         </button>
         <div className="text-center">
-          <h2 className="text-[17px] font-bold leading-tight">{t.history}</h2>
-          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">{t.mainWallet}</p>
+          <h2 className="text-[17px] font-medium leading-tight">{t.history}</h2>
+          <p className="text-[10px] text-zinc-500 font-normal uppercase tracking-widest mt-0.5">{t.mainWallet}</p>
         </div>
         <button className="p-3 text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-900 rounded-full btn-press">
           <Star size={22} />
@@ -67,14 +62,14 @@ const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, languag
              <div className="w-20 h-20 bg-zinc-100 dark:bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-6 opacity-40">
                 <History className="text-zinc-400" size={32} />
              </div>
-             <p className="text-zinc-500 font-semibold opacity-60">
+             <p className="text-zinc-500 font-medium opacity-60">
                {language === 'ru' ? 'Транзакций пока нет' : 'No transactions yet'}
              </p>
           </div>
         ) : (
           Object.keys(groupedTransactions).map((dateLabel) => (
             <div key={dateLabel} className="mb-8">
-              <h3 className="py-3 text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em]">
+              <h3 className="py-3 text-[11px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em]">
                 {dateLabel}
               </h3>
               <div className="space-y-2">
@@ -102,14 +97,14 @@ const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, languag
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center space-x-1.5">
-                            <h4 className="font-bold text-base">
+                            <h4 className="font-medium text-base">
                               {isSwap ? (language === 'ru' ? 'Обмен' : 'Swap') : (language === 'ru' ? 'Перевод' : 'Transfer')}
                             </h4>
                             <div className="text-green-500 bg-green-500/10 rounded-full p-0.5">
                               <CheckCircle2 size={10} fill="currentColor" className="text-white dark:text-black" />
                             </div>
                           </div>
-                          <p className="text-[12px] text-zinc-500 font-medium truncate max-w-[120px]">
+                          <p className="text-[12px] text-zinc-500 font-normal truncate max-w-[120px]">
                             {isSwap 
                               ? `${asset?.symbol} → ${getAsset(tx.toAssetId!)?.symbol}`
                               : (tx.address ? `${tx.address.slice(0, 6)}...${tx.address.slice(-4)}` : 'TDii6va...8xcqYx')
@@ -118,10 +113,10 @@ const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, languag
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className={`font-bold text-[16px] tracking-tight ${isReceive ? 'text-green-600 dark:text-green-500' : 'text-zinc-900 dark:text-zinc-100'}`}>
+                        <p className={`font-medium text-[16px] tracking-tight ${isReceive ? 'text-green-600 dark:text-green-500' : 'text-zinc-900 dark:text-zinc-100'}`}>
                           {isReceive ? '+' : '-'}{formatAmount(tx.amount)} {asset?.symbol}
                         </p>
-                        <p className="text-[12px] text-zinc-400 font-medium">
+                        <p className="text-[12px] text-zinc-400 font-normal">
                           ≈ ${formatUSD(tx.amount * (asset?.priceUsd || 1))}
                         </p>
                       </div>
@@ -137,7 +132,7 @@ const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, languag
       {selectedTx && (
         <div className="absolute inset-0 z-[120] flex items-end justify-center animate-fade-in">
           <div className="absolute inset-0 bg-black/60 glass-panel" onClick={() => setSelectedTx(null)}></div>
-          <div className="w-full bg-white dark:bg-zinc-950 rounded-t-[44px] p-8 pb-12 relative animate-spring-up shadow-2xl border-t border-white/5">
+          <div className="w-full bg-white dark:bg-zinc-950 rounded-t-[44px] p-8 pb-12 relative animate-ios-bottom-up shadow-2xl border-t border-white/5">
             <div className="w-12 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full mx-auto mb-8"></div>
             <button 
               onClick={() => setSelectedTx(null)}
@@ -156,37 +151,37 @@ const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, languag
                  selectedTx.type === 'send' ? <ArrowUpRight size={32} strokeWidth={2.5} /> : 
                  <ArrowDownLeft size={32} strokeWidth={2.5} />}
               </div>
-              <h3 className="text-3xl font-bold tracking-tight">
+              <h3 className="text-3xl font-medium tracking-tight">
                 {selectedTx.type === 'receive' ? '+' : '-'}{formatAmount(selectedTx.amount)} {getAsset(selectedTx.assetId)?.symbol}
               </h3>
               {selectedTx.type === 'swap' && (
-                <p className="text-lg text-zinc-500 font-bold mt-1">
+                <p className="text-lg text-zinc-500 font-medium mt-1">
                    → +{formatAmount(selectedTx.toAmount || 0)} {getAsset(selectedTx.toAssetId!)?.symbol}
                 </p>
               )}
               <div className="flex items-center justify-center space-x-1.5 mt-3">
                 <ShieldCheck size={14} className="text-green-500" />
-                <span className="text-green-500 text-[11px] font-bold uppercase tracking-[0.2em]">{t.done}</span>
+                <span className="text-green-500 text-[11px] font-medium uppercase tracking-[0.2em]">{t.done}</span>
               </div>
             </div>
 
             <div className="space-y-4">
               <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-[32px] p-6 space-y-4 border border-zinc-100 dark:border-white/5 shadow-inner">
                 <div className="flex justify-between items-center">
-                  <span className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest">{t.date}</span>
-                  <span className="font-bold text-[13px]">{new Date(selectedTx.timestamp).toLocaleString()}</span>
+                  <span className="text-zinc-400 font-medium uppercase text-[10px] tracking-widest">{t.date}</span>
+                  <span className="font-medium text-[13px]">{new Date(selectedTx.timestamp).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-start pt-4 border-t border-zinc-200/50 dark:border-white/5">
-                  <span className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest mt-1">{t.txHash}</span>
+                  <span className="text-zinc-400 font-medium uppercase text-[10px] tracking-widest mt-1">{t.txHash}</span>
                   <span className="text-blue-500 font-mono text-[10px] break-all text-right pl-12 leading-relaxed">{selectedTx.hash}</span>
                 </div>
                 <div className="flex justify-between items-center pt-4 border-t border-zinc-200/50 dark:border-white/5">
-                  <span className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest">{t.networkFee}</span>
-                  <span className="font-bold text-[13px]">$1.24</span>
+                  <span className="text-zinc-400 font-medium uppercase text-[10px] tracking-widest">{t.networkFee}</span>
+                  <span className="font-medium text-[13px]">{selectedTx.networkFee || '$1,24'}</span>
                 </div>
               </div>
               
-              <button className="w-full py-5 bg-zinc-100 dark:bg-zinc-900 text-blue-600 dark:text-blue-500 rounded-[24px] flex items-center justify-center space-x-2.5 font-bold text-[13px] uppercase tracking-widest btn-press">
+              <button className="w-full py-5 bg-zinc-100 dark:bg-zinc-900 text-blue-600 dark:text-blue-500 rounded-[24px] flex items-center justify-center space-x-2.5 font-medium text-[13px] uppercase tracking-widest btn-press">
                 <ExternalLink size={16} />
                 <span>View in Explorer</span>
               </button>

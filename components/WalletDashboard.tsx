@@ -15,19 +15,15 @@ interface Props {
   t: any;
 }
 
-const formatCurrency = (val: number) => {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(val);
+const formatValue = (val: number, maxDecimals: number = 4) => {
+  return val.toLocaleString('ru-RU', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maxDecimals,
+  });
 };
 
-const formatToken = (val: number) => {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 6,
-  }).format(val);
-};
+const formatCurrency = (val: number) => formatValue(val, 2);
+const formatToken = (val: number) => formatValue(val, 4);
 
 const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, sortOrder, onSortChange, onAction, onRefresh, isRefreshing, t }) => {
   const [pullDistance, setPullDistance] = useState(0);
@@ -77,7 +73,7 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
         <Loader2 className={`text-blue-600 ${isRefreshing || pullDistance > 60 ? 'animate-spin' : ''}`} size={24} />
       </div>
 
-      <div className="px-6 pt-12 flex justify-between items-center shrink-0">
+      <div className="px-6 pt-4 flex justify-between items-center shrink-0">
         <button onClick={() => onAction('settings')} className="p-2 text-zinc-500 dark:text-zinc-400 btn-press">
           <Settings size={22} strokeWidth={1.5} />
         </button>
@@ -96,13 +92,13 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
         </button>
       </div>
 
-      <div className="text-center mt-8 mb-8 shrink-0">
+      <div className="text-center mt-6 mb-8 shrink-0">
         <h1 className="text-[44px] font-medium tracking-tight leading-none mb-2">
           {formatCurrency(totalBalance)} $
         </h1>
         <div className="flex items-center justify-center space-x-1.5 text-green-600 dark:text-green-500 font-medium text-sm bg-green-500/5 py-1 px-3 rounded-full w-fit mx-auto">
           <Plus size={14} strokeWidth={2} />
-          <span>1.17 $ (+0.08%)</span>
+          <span>1,17 $ (+0,08%)</span>
         </div>
       </div>
 
@@ -136,7 +132,10 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
           <button onClick={() => onAction('history')} className="text-zinc-500 dark:text-zinc-400 btn-press">
             <History size={22} strokeWidth={1.5} />
           </button>
-          <button onClick={toggleSort} className="text-zinc-500 dark:text-zinc-400 btn-press">
+          <button 
+            onClick={toggleSort} 
+            className={`p-1 rounded-md transition-colors ${sortOrder !== 'default' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-zinc-500 dark:text-zinc-400'} btn-press`}
+          >
             <SlidersHorizontal size={22} strokeWidth={1.5} />
           </button>
         </div>
@@ -170,7 +169,7 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
                 <p className="text-[13px] text-zinc-500 font-normal">
                   {formatCurrency(asset.priceUsd)} $ 
                   <span className={`ml-1.5 ${asset.change24h >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-500'}`}>
-                    {asset.change24h >= 0 ? '+' : ''}{asset.change24h.toFixed(2)}%
+                    {asset.change24h >= 0 ? '+' : ''}{formatCurrency(asset.change24h)}%
                   </span>
                 </p>
               </div>

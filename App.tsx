@@ -17,7 +17,6 @@ import { translations } from './translations';
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState<View>('wallet');
-  const [viewStack, setViewStack] = useState<View[]>(['wallet']);
   const [sortOrder, setSortOrder] = useState<SortOrder>('default');
   const [isRefreshing, setIsRefreshing] = useState(false);
   
@@ -31,11 +30,11 @@ const App: React.FC = () => {
   
   const t = translations[language];
 
-  // Multi-wallet State
+  // Multi-wallet State with isolated transactions
   const [wallets, setWallets] = useState<Wallet[]>(() => {
     const saved = localStorage.getItem('demo_wallets');
     if (saved) return JSON.parse(saved);
-    return [{ id: 'wallet-1', name: language === 'ru' ? 'Основной кошелек' : 'Main Wallet', assets: INITIAL_ASSETS }];
+    return [{ id: 'wallet-1', name: language === 'ru' ? 'Основной кошелек' : 'Main Wallet', assets: INITIAL_ASSETS, transactions: [] }];
   });
 
   const [activeWalletId, setActiveWalletId] = useState(() => {
@@ -46,10 +45,17 @@ const App: React.FC = () => {
     return wallets.find(w => w.id === activeWalletId) || wallets[0];
   }, [wallets, activeWalletId]);
 
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const saved = localStorage.getItem('demo_wallet_txs');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Handle Asset Sorting
+  const sortedAssets = useMemo(() => {
+    let list = [...activeWallet.assets];
+    if (sortOrder === 'asc') {
+      list.sort((a, b) => (a.balance * a.priceUsd) - (b.balance * b.priceUsd));
+    } else if (sortOrder === 'desc') {
+      list.sort((a, b) => (b.balance * b.priceUsd) - (a.balance * a.priceUsd));
+    }
+    // 'default' returns the original order from INITIAL_ASSETS
+    return list;
+  }, [activeWallet.assets, sortOrder]);
 
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
 
@@ -101,13 +107,12 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('demo_wallets', JSON.stringify(wallets));
     localStorage.setItem('demo_active_wallet_id', activeWalletId);
-    localStorage.setItem('demo_wallet_txs', JSON.stringify(transactions));
     localStorage.setItem('demo_wallet_lang', language);
     localStorage.setItem('demo_wallet_theme', theme);
     
     const root = window.document.documentElement;
     theme === 'dark' ? root.classList.add('dark') : root.classList.remove('dark');
-  }, [wallets, activeWalletId, transactions, language, theme]);
+  }, [wallets, activeWalletId, language, theme]);
 
   const totalBalance = useMemo(() => {
     return activeWallet.assets.reduce((acc, asset) => acc + (asset.balance * asset.priceUsd), 0);
@@ -136,22 +141,20 @@ const App: React.FC = () => {
       hash: `0x${Math.random().toString(16).slice(2, 10)}${Math.random().toString(16).slice(2, 10)}...`,
       networkFee: (Math.random() * 2 + 0.1).toFixed(2) + ' USD'
     };
-    setTransactions(prev => [fullTx, ...prev]);
+    
     setWallets(prev => prev.map(w => {
       if (w.id === activeWalletId) {
-        return {
-          ...w,
-          assets: w.assets.map(a => {
-            if (a.id === tx.assetId) {
-              if (tx.type === 'send' || tx.type === 'swap') return { ...a, balance: Math.max(0, a.balance - tx.amount) };
-              if (tx.type === 'receive') return { ...a, balance: a.balance + tx.amount };
-            }
-            if (tx.type === 'swap' && a.id === tx.toAssetId) {
-              return { ...a, balance: a.balance + (tx.toAmount || 0) };
-            }
-            return a;
-          })
-        };
+        const updatedAssets = w.assets.map(a => {
+          if (a.id === tx.assetId) {
+            if (tx.type === 'send' || tx.type === 'swap') return { ...a, balance: Math.max(0, a.balance - tx.amount) };
+            if (tx.type === 'receive') return { ...a, balance: a.balance + tx.amount };
+          }
+          if (tx.type === 'swap' && a.id === tx.toAssetId) {
+            return { ...a, balance: a.balance + (tx.toAmount || 0) };
+          }
+          return a;
+        });
+        return { ...w, assets: updatedAssets, transactions: [fullTx, ...w.transactions] };
       }
       return w;
     }));
@@ -162,7 +165,8 @@ const App: React.FC = () => {
     const newWallet: Wallet = {
       id: newId,
       name: `${language === 'ru' ? 'Кошелек' : 'Wallet'} ${wallets.length + 1}`,
-      assets: INITIAL_ASSETS.map(a => ({ ...a, balance: 0 }))
+      assets: INITIAL_ASSETS.map(a => ({ ...a, balance: 0 })),
+      transactions: []
     };
     setWallets([...wallets, newWallet]);
     setActiveWalletId(newId);
@@ -175,12 +179,21 @@ const App: React.FC = () => {
     if (activeWalletId === id) setActiveWalletId(newWallets[0].id);
   };
 
+  const handleReset = () => {
+    // Resetting only balances and history for all wallets, keeping the wallet entities
+    setWallets(prev => prev.map(w => ({
+      ...w,
+      assets: w.assets.map(a => ({ ...a, balance: 0 })),
+      transactions: []
+    })));
+  };
+
   const renderView = () => {
     switch (activeView) {
       case 'wallet':
         return (
           <WalletDashboard 
-            assets={activeWallet.assets} 
+            assets={sortedAssets} 
             totalBalance={totalBalance} 
             walletName={activeWallet.name}
             sortOrder={sortOrder}
@@ -195,7 +208,7 @@ const App: React.FC = () => {
         return (
           <AssetDetailView 
             asset={activeWallet.assets.find(a => a.id === selectedAssetId)!}
-            transactions={transactions.filter(tx => tx.assetId === selectedAssetId || tx.toAssetId === selectedAssetId)}
+            transactions={activeWallet.transactions.filter(tx => tx.assetId === selectedAssetId || tx.toAssetId === selectedAssetId)}
             onBack={() => navigateTo('wallet')}
             onAction={(view) => navigateTo(view, selectedAssetId)}
             t={t}
@@ -207,14 +220,23 @@ const App: React.FC = () => {
       case 'receive':
         return <ReceiveView assets={activeWallet.assets} initialAssetId={selectedAssetId} onBack={() => navigateTo('wallet')} onSimulateReceive={handleAddTransaction} t={t} />;
       case 'top-up':
-        // Fix: Added missing 'language' prop to TopUpView component
         return <TopUpView assets={activeWallet.assets} onBack={() => navigateTo('wallet')} onUpdate={handleUpdateBalance} language={language} />;
       case 'swap':
         return <SwapView assets={activeWallet.assets} onBack={() => navigateTo('wallet')} onSwap={handleAddTransaction} t={t} language={language} />;
       case 'history':
-        return <HistoryView transactions={transactions} assets={activeWallet.assets} onBack={() => navigateTo('wallet')} t={t} language={language} />;
+        return <HistoryView transactions={activeWallet.transactions} assets={activeWallet.assets} onBack={() => navigateTo('wallet')} t={t} language={language} />;
       case 'settings':
-        return <SettingsView onBack={() => navigateTo('wallet')} language={language} onLanguageChange={setLanguage} theme={theme} onThemeChange={setTheme} t={t} />;
+        return (
+          <SettingsView 
+            onBack={() => navigateTo('wallet')} 
+            language={language} 
+            onLanguageChange={setLanguage} 
+            theme={theme} 
+            onThemeChange={setTheme} 
+            onReset={handleReset}
+            t={t} 
+          />
+        );
       default:
         return <div className="p-10 text-center text-zinc-500 animate-fade-in">View in development</div>;
     }
@@ -222,7 +244,7 @@ const App: React.FC = () => {
 
   return (
     <div className={`flex justify-center min-h-screen transition-colors duration-500 ${theme === 'dark' ? 'bg-black' : 'bg-zinc-100'}`}>
-      <div className="w-full max-w-[430px] h-screen bg-white dark:bg-black flex flex-col relative overflow-hidden shadow-2xl border-x border-zinc-200 dark:border-zinc-900">
+      <div className="w-full max-w-[430px] h-screen bg-white dark:bg-black flex flex-col relative overflow-hidden shadow-2xl border-x border-zinc-200 dark:border-zinc-900 pt-safe pb-safe">
         <main className="flex-1 overflow-y-auto ios-scroll no-scrollbar relative">
           <div key={activeView} className="h-full w-full absolute inset-0 overflow-hidden">
             {renderView()}

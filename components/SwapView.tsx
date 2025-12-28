@@ -11,11 +11,11 @@ interface Props {
   language: Language;
 }
 
-const formatValue = (val: number) => {
-  return new Intl.NumberFormat('en-US', {
+const formatValue = (val: number, maxDecimals: number = 4) => {
+  return val.toLocaleString('ru-RU', {
     minimumFractionDigits: 0,
-    maximumFractionDigits: 6,
-  }).format(val);
+    maximumFractionDigits: maxDecimals,
+  });
 };
 
 const SwapView: React.FC<Props> = ({ assets, onBack, onSwap, t, language }) => {
@@ -39,7 +39,7 @@ const SwapView: React.FC<Props> = ({ assets, onBack, onSwap, t, language }) => {
   const toAmount = useMemo(() => {
     const amount = parseFloat(fromAmount);
     if (isNaN(amount) || !exchangeRate) return '';
-    return (amount * exchangeRate).toFixed(6);
+    return (amount * exchangeRate).toFixed(4);
   }, [fromAmount, exchangeRate]);
 
   const handleSwapClick = () => {

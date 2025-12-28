@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Asset, Transaction, Language, View } from '../types';
-import { ChevronLeft, ArrowUpRight, Plus, Repeat, Info, ArrowDownLeft, X, ShieldCheck, ExternalLink, Copy } from 'lucide-react';
+import { ChevronLeft, ArrowUpRight, Plus, Repeat, Info, ArrowDownLeft, X, ShieldCheck, ExternalLink } from 'lucide-react';
 
 interface Props {
   asset: Asset;
@@ -12,15 +12,22 @@ interface Props {
   language: Language;
 }
 
+const formatValueStr = (val: number, decimals: number = 4) => {
+  return val.toLocaleString('ru-RU', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: decimals,
+  });
+};
+
 const AssetDetailView: React.FC<Props> = ({ asset, transactions, onBack, onAction, t, language }) => {
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
 
-  const formatValue = (val: number) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 6 }).format(val);
-  const formatUSD = (val: number) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
+  const formatValue = (val: number) => formatValueStr(val, 4);
+  const formatUSD = (val: number) => formatValueStr(val, 2);
 
   return (
     <div className="h-full bg-white dark:bg-black text-black dark:text-white flex flex-col animate-ios-slide-in relative transition-colors duration-300">
-      <div className="px-6 pt-12 pb-4 flex items-center justify-between shrink-0">
+      <div className="px-6 pt-4 pb-4 flex items-center justify-between shrink-0">
         <button onClick={onBack} className="w-10 h-10 bg-zinc-100 dark:bg-zinc-900 rounded-full flex items-center justify-center btn-press">
           <ChevronLeft size={24} strokeWidth={1.5} />
         </button>
@@ -43,7 +50,7 @@ const AssetDetailView: React.FC<Props> = ({ asset, transactions, onBack, onActio
             ≈ ${formatUSD(asset.balance * asset.priceUsd)}
           </p>
           <div className={`mt-2 px-3 py-1 rounded-full text-xs font-medium ${asset.change24h >= 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-            {asset.change24h >= 0 ? '+' : ''}{asset.change24h.toFixed(2)}% {language === 'ru' ? 'за 24ч' : '24h'}
+            {asset.change24h >= 0 ? '+' : ''}{formatUSD(asset.change24h)}% {language === 'ru' ? 'за 24ч' : '24h'}
           </div>
         </div>
 
@@ -160,7 +167,7 @@ const AssetDetailView: React.FC<Props> = ({ asset, transactions, onBack, onActio
                 </div>
                 <div className="flex justify-between items-center pt-4 border-t border-zinc-200/50 dark:border-white/5">
                   <span className="text-zinc-400 font-medium uppercase text-[10px] tracking-widest">{t.networkFee}</span>
-                  <span className="font-medium text-[13px]">{selectedTx.networkFee || '$0.00'}</span>
+                  <span className="font-medium text-[13px]">{selectedTx.networkFee || '$0,00'}</span>
                 </div>
               </div>
               

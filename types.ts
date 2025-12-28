@@ -1,5 +1,4 @@
 
-
 export interface Asset {
   id: string;
   name: string;
@@ -33,11 +32,11 @@ export interface Wallet {
   id: string;
   name: string;
   assets: Asset[];
+  transactions: Transaction[];
 }
 
 export type SortOrder = 'default' | 'asc' | 'desc';
 export type Language = 'en' | 'ru';
 export type Theme = 'light' | 'dark';
 
-// Fix: Added 'rewards' and 'more' to the View union to allow safe comparison in BottomNav.tsx
 export type View = 'wallet' | 'swap' | 'discover' | 'settings' | 'send' | 'receive' | 'top-up' | 'history' | 'asset-detail' | 'wallet-manager' | 'rewards' | 'more';
