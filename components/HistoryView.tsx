@@ -9,6 +9,7 @@ interface Props {
   onBack: () => void;
   t: any;
   language: Language;
+  formatPrice: (usd: number) => string;
 }
 
 const formatValue = (val: number, maxDecimals: number = 4) => {
@@ -18,7 +19,7 @@ const formatValue = (val: number, maxDecimals: number = 4) => {
   });
 };
 
-const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, language }) => {
+const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, language, formatPrice }) => {
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   
   const getSymbolById = (id: string) => {
@@ -128,7 +129,7 @@ const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, languag
                                 {formatValue(tx.amount)} {fromSymbol} → {formatValue(tx.toAmount || 0)} {toSymbol}
                               </p>
                               <p className="text-[11px] text-zinc-400 font-normal">
-                                ≈ ${(tx.amount * getPriceById(tx.assetId)).toFixed(2)}
+                                ≈ {formatPrice(tx.amount * getPriceById(tx.assetId))}
                               </p>
                            </div>
                         ) : (
@@ -137,7 +138,7 @@ const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, languag
                               {isReceive ? '+' : '-'}{formatValue(tx.amount)} {fromSymbol}
                             </p>
                             <p className="text-[12px] text-zinc-400 font-normal">
-                              ≈ ${(tx.amount * getPriceById(tx.assetId)).toFixed(2)}
+                              ≈ {formatPrice(tx.amount * getPriceById(tx.assetId))}
                             </p>
                           </>
                         )}
@@ -198,7 +199,7 @@ const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, languag
                 </div>
                 <div className="flex justify-between items-center pt-4 border-t border-zinc-200/50 dark:border-white/5">
                   <span className="text-zinc-400 font-semibold uppercase text-[10px] tracking-widest">{t.networkFee}</span>
-                  <span className="font-semibold text-[13px]">{selectedTx.networkFee || '$1,24'}</span>
+                  <span className="font-semibold text-[13px]">{selectedTx.networkFee || formatPrice(1.24)}</span>
                 </div>
               </div>
               

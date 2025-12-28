@@ -94,14 +94,16 @@ const App: React.FC = () => {
     if (!force && Date.now() - lastPriceFetchRef.current < 30000) return;
 
     try {
-      const cgIds = activeWallet.assets
+      const currentAssets = activeWallet.assets;
+      if (!currentAssets || currentAssets.length === 0) return;
+
+      const cgIds = currentAssets
         .map(a => CG_ID_MAP[a.id] || a.id)
         .join(',');
       
       const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cgIds}&vs_currencies=usd&include_24hr_change=true`);
       
       if (!response.ok) {
-        // Если 429 лимит, просто выходим без ворнингов
         if (response.status === 429) return;
         throw new Error('API Error');
       }
@@ -109,24 +111,27 @@ const App: React.FC = () => {
       const data = await response.json();
       lastPriceFetchRef.current = Date.now();
       
-      setWallets(prev => prev.map(wallet => ({
-        ...wallet,
-        assets: wallet.assets.map(asset => {
-          const cgId = CG_ID_MAP[asset.id] || asset.id;
-          if (data[cgId]) {
-            return {
-              ...asset,
-              priceUsd: data[cgId].usd,
-              change24h: data[cgId].usd_24h_change || asset.change24h
-            };
-          }
-          return asset;
-        })
-      })));
+      setWallets(prev => prev.map(wallet => {
+        if (wallet.id !== activeWalletId) return wallet;
+        return {
+          ...wallet,
+          assets: wallet.assets.map(asset => {
+            const cgId = CG_ID_MAP[asset.id] || asset.id;
+            if (data[cgId]) {
+              return {
+                ...asset,
+                priceUsd: data[cgId].usd,
+                change24h: data[cgId].usd_24h_change || asset.change24h
+              };
+            }
+            return asset;
+          })
+        };
+      }));
     } catch (error) { 
       // Молча оставляем старые цены
     }
-  }, [activeWallet.assets]);
+  }, [activeWallet.assets, activeWalletId]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -247,8 +252,6 @@ const App: React.FC = () => {
       }
       return w;
     }));
-    
-    // Удален алерт о покупке для более плавного UX, достаточно перехода в историю или обновления баланса
   };
 
   const renderView = () => {

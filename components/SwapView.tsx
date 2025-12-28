@@ -9,6 +9,7 @@ interface Props {
   onSwap: (tx: Transaction) => void;
   t: any;
   language: Language;
+  formatPrice: (usd: number) => string;
 }
 
 const formatValue = (val: number, maxDecimals: number = 4) => {
@@ -18,7 +19,7 @@ const formatValue = (val: number, maxDecimals: number = 4) => {
   });
 };
 
-const SwapView: React.FC<Props> = ({ assets, onBack, onSwap, t, language }) => {
+const SwapView: React.FC<Props> = ({ assets, onBack, onSwap, t, language, formatPrice }) => {
   const [fromAsset, setFromAsset] = useState<Asset>(assets[0]);
   const [toAsset, setToAsset] = useState<Asset>(assets[1]);
   const [fromAmount, setFromAmount] = useState('');
@@ -167,7 +168,7 @@ const SwapView: React.FC<Props> = ({ assets, onBack, onSwap, t, language }) => {
               onClick={() => setIsAssetPickerOpen('from')}
               className="flex items-center space-x-2 bg-white dark:bg-zinc-800 p-2 pr-4 rounded-[20px] border border-zinc-100 dark:border-white/5 shadow-sm active:scale-95 transition-all"
             >
-              <img src={fromAsset.logoUrl} className="w-8 h-8 object-contain rounded-full shadow-sm" alt="" />
+              <img src={fromAsset.logoUrl} className="w-8 h-8 object-contain rounded-[22%] shadow-sm" alt="" />
               <span className="font-semibold text-base">{fromAsset.symbol}</span>
               <ChevronDown size={14} className="text-zinc-400" />
             </button>
@@ -181,7 +182,7 @@ const SwapView: React.FC<Props> = ({ assets, onBack, onSwap, t, language }) => {
             />
           </div>
           <p className="text-right text-[13px] text-zinc-400 font-semibold mt-2 opacity-80">
-            ≈ {formatValue(parseFloat(fromAmount || '0') * fromAsset.priceUsd)} $
+            ≈ {formatPrice(parseFloat(fromAmount || '0') * fromAsset.priceUsd)}
           </p>
         </div>
 
@@ -204,7 +205,7 @@ const SwapView: React.FC<Props> = ({ assets, onBack, onSwap, t, language }) => {
               onClick={() => setIsAssetPickerOpen('to')}
               className="flex items-center space-x-2 bg-white dark:bg-zinc-800 p-2 pr-4 rounded-[20px] border border-zinc-100 dark:border-white/5 shadow-sm active:scale-95 transition-all"
             >
-              <img src={toAsset.logoUrl} className="w-8 h-8 object-contain rounded-full shadow-sm" alt="" />
+              <img src={toAsset.logoUrl} className="w-8 h-8 object-contain rounded-[22%] shadow-sm" alt="" />
               <span className="font-semibold text-base">{toAsset.symbol}</span>
               <ChevronDown size={14} className="text-zinc-400" />
             </button>
@@ -220,7 +221,7 @@ const SwapView: React.FC<Props> = ({ assets, onBack, onSwap, t, language }) => {
                </div>
             ) : (
               <p className="text-right text-[13px] text-zinc-400 font-semibold opacity-80">
-                ≈ {formatValue(parseFloat(toAmount || '0') * toAsset.priceUsd)} $
+                ≈ {formatPrice(parseFloat(toAmount || '0') * toAsset.priceUsd)}
               </p>
             )}
           </div>
@@ -235,7 +236,7 @@ const SwapView: React.FC<Props> = ({ assets, onBack, onSwap, t, language }) => {
           </div>
           <div className="flex justify-between items-center pt-3 border-t border-zinc-200/50 dark:border-white/5">
             <span className="text-zinc-400 font-semibold uppercase tracking-widest text-[10px]">{t.networkFee}</span>
-            <span className="text-zinc-800 dark:text-zinc-200 font-semibold text-[13px]">1,42 $</span>
+            <span className="text-zinc-800 dark:text-zinc-200 font-semibold text-[13px]">{formatPrice(1.42)}</span>
           </div>
         </div>
 
@@ -285,7 +286,7 @@ const SwapView: React.FC<Props> = ({ assets, onBack, onSwap, t, language }) => {
                     >
                         <div className="flex items-center space-x-4">
                             <div className="w-11 h-11 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center group-hover:shadow-md transition-all p-1.5">
-                                <img src={asset.logoUrl} className="w-full h-full object-contain" alt="" />
+                                <img src={asset.logoUrl} className="w-full h-full object-contain rounded-[22%]" alt="" />
                             </div>
                             <div className="text-left">
                                 <p className="font-semibold text-base leading-none mb-1">{asset.symbol}</p>
@@ -294,7 +295,7 @@ const SwapView: React.FC<Props> = ({ assets, onBack, onSwap, t, language }) => {
                         </div>
                         <div className="text-right">
                             <p className="font-semibold text-[15px]">{formatValue(asset.balance)}</p>
-                            <p className="text-[11px] text-zinc-400 font-semibold">{formatValue(asset.balance * asset.priceUsd)} $</p>
+                            <p className="text-[11px] text-zinc-400 font-semibold">{formatPrice(asset.balance * asset.priceUsd)}</p>
                         </div>
                     </button>
                 ))}
@@ -332,7 +333,7 @@ const SwapView: React.FC<Props> = ({ assets, onBack, onSwap, t, language }) => {
               <div className="px-6 space-y-4">
                 <div className="flex justify-between text-[13px]">
                   <span className="text-zinc-400 font-semibold uppercase tracking-widest text-[10px]">{t.networkFee}</span>
-                  <span className="font-semibold text-zinc-800 dark:text-zinc-200">1,42 $</span>
+                  <span className="font-semibold text-zinc-800 dark:text-zinc-200">{formatPrice(1.42)}</span>
                 </div>
                 <div className="flex justify-between text-[13px]">
                    <span className="text-zinc-400 font-semibold uppercase tracking-widest text-[10px]">{language === 'ru' ? 'ПРОСКАЛЬЗЫВАНИЕ' : 'SLIPPAGE'}</span>
