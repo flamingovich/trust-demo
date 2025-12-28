@@ -108,16 +108,16 @@ const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, languag
                         <div className="min-w-0">
                           <div className="flex items-center space-x-1.5">
                             <h4 className="font-semibold text-[15px]">
-                              {isSwap ? (language === 'ru' ? 'Обмен' : 'Swap') : (language === 'ru' ? 'Перевод' : 'Transfer')}
+                              {isSwap ? (language === 'ru' ? 'Обмен' : 'Swap') : isSend ? (language === 'ru' ? 'Отправлено' : 'Sent') : (language === 'ru' ? 'Получено' : 'Received')}
                             </h4>
                             <div className="flex items-center justify-center w-3.5 h-3.5 bg-green-500 rounded-full shrink-0">
                               <Check size={9} strokeWidth={4} className="text-white" />
                             </div>
                           </div>
-                          <p className="text-[12px] text-zinc-500 font-normal truncate max-w-[120px]">
+                          <p className="text-[12px] text-zinc-500 font-normal truncate max-w-[140px]">
                             {isSwap 
                               ? `${fromSymbol} → ${toSymbol}`
-                              : (tx.address ? `${tx.address.slice(0, 6)}...${tx.address.slice(-4)}` : 'TDii6va...8xcqYx')
+                              : (tx.address ? (isSend ? (language === 'ru' ? `Кому: ${tx.address.slice(0, 6)}...${tx.address.slice(-4)}` : `To: ${tx.address.slice(0, 6)}...${tx.address.slice(-4)}`) : (language === 'ru' ? `От: ${tx.address.slice(0, 6)}...${tx.address.slice(-4)}` : `From: ${tx.address.slice(0, 6)}...${tx.address.slice(-4)}`)) : 'TDii6va...8xcqYx')
                             }
                           </p>
                         </div>
@@ -193,6 +193,16 @@ const HistoryView: React.FC<Props> = ({ transactions, assets, onBack, t, languag
                   <span className="text-zinc-400 font-semibold uppercase text-[10px] tracking-widest">{t.date}</span>
                   <span className="font-semibold text-[13px]">{new Date(selectedTx.timestamp).toLocaleString()}</span>
                 </div>
+                {selectedTx.address && (
+                  <div className="flex justify-between items-start pt-4 border-t border-zinc-200/50 dark:border-white/5">
+                    <span className="text-zinc-400 font-semibold uppercase text-[10px] tracking-widest mt-1">
+                      {selectedTx.type === 'send' ? (language === 'ru' ? 'КОМУ' : 'TO') : (language === 'ru' ? 'ОТ' : 'FROM')}
+                    </span>
+                    <span className="text-zinc-800 dark:text-zinc-200 font-mono text-[11px] break-all text-right pl-12 font-semibold">
+                      {selectedTx.address}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between items-start pt-4 border-t border-zinc-200/50 dark:border-white/5">
                   <span className="text-zinc-400 font-semibold uppercase text-[10px] tracking-widest mt-1">{t.txHash}</span>
                   <span className="text-blue-500 font-mono text-[10px] break-all text-right pl-12 leading-relaxed font-semibold">{selectedTx.hash}</span>

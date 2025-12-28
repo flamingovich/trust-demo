@@ -56,7 +56,7 @@ const AssetDetailView: React.FC<Props> = ({ asset, transactions = [], onBack, on
               <img 
                 src={asset?.logoUrl} 
                 alt="" 
-                className="w-12 h-12 object-contain rounded-[22%]" // Добавлено скругление
+                className="w-12 h-12 object-contain rounded-[22%]"
               />
             </div>
             <div className="absolute -bottom-1 -right-1 px-3 py-1 rounded-full bg-zinc-100 dark:bg-dark-elevated border-2 border-white dark:border-dark-bg text-[10px] font-extrabold uppercase tracking-widest text-zinc-500 shadow-sm">
@@ -115,17 +115,27 @@ const AssetDetailView: React.FC<Props> = ({ asset, transactions = [], onBack, on
                     <div className="w-10 h-10 rounded-2xl bg-white dark:bg-dark-elevated flex items-center justify-center shadow-sm">
                       {tx.type === 'receive' ? <ArrowDownLeft size={20} className="text-green-500" strokeWidth={2.5} /> : tx.type === 'swap' ? <Repeat size={20} className="text-blue-500" strokeWidth={2.5} /> : <ArrowUpRight size={20} className="text-zinc-400" strokeWidth={2.5} />}
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <div className="flex items-center space-x-1.5">
                         <p className="font-bold text-[15px]">{tx.type === 'receive' ? t.receive : tx.type === 'swap' ? t.swap : t.send}</p>
                         <div className="flex items-center justify-center w-3.5 h-3.5 bg-green-500 rounded-full shrink-0">
                           <Check size={9} strokeWidth={4} className="text-white" />
                         </div>
                       </div>
-                      <p className="text-[11px] text-zinc-500 font-bold opacity-60 uppercase">{new Date(tx.timestamp).toLocaleDateString()}</p>
+                      <div className="flex flex-col">
+                        <p className="text-[11px] text-zinc-500 font-bold opacity-60 uppercase leading-tight">
+                          {new Date(tx.timestamp).toLocaleDateString()}
+                        </p>
+                        {tx.address && (tx.type === 'send' || tx.type === 'receive') && (
+                          <p className="text-[10px] text-zinc-400 font-bold truncate max-w-[120px] mt-0.5">
+                            {tx.type === 'send' ? (language === 'ru' ? 'Кому: ' : 'To: ') : (language === 'ru' ? 'От: ' : 'From: ')}
+                            {tx.address.slice(0, 6)}...{tx.address.slice(-4)}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     {tx.type === 'swap' ? (
                       <div className="flex flex-col items-end">
                         <p className="font-bold text-[13px] tracking-tight">
@@ -179,9 +189,19 @@ const AssetDetailView: React.FC<Props> = ({ asset, transactions = [], onBack, on
                   <span className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest">{t.date}</span>
                   <span className="font-bold text-[13px]">{new Date(selectedTx.timestamp).toLocaleString()}</span>
                 </div>
+                {selectedTx.address && (
+                  <div className="flex justify-between items-start pt-4 border-t border-zinc-200/50 dark:border-dark-border">
+                    <span className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest mt-1">
+                      {selectedTx.type === 'send' ? (language === 'ru' ? 'КОМУ' : 'TO') : (language === 'ru' ? 'ОТ' : 'FROM')}
+                    </span>
+                    <span className="text-zinc-900 dark:text-zinc-100 font-mono text-[11px] break-all text-right pl-12 font-bold">
+                      {selectedTx.address}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center pt-4 border-t border-zinc-200/50 dark:border-dark-border">
                   <span className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest">{t.networkFee}</span>
-                  <span className="font-bold text-[13px]">{formatPrice(0.85)}</span>
+                  <span className="font-bold text-[13px]">{selectedTx.networkFee || formatPrice(0.85)}</span>
                 </div>
               </div>
               <button className="w-full py-5 bg-zinc-100 dark:bg-dark-bg text-blue-600 dark:text-blue-500 rounded-[24px] flex items-center justify-center space-x-2.5 font-bold text-[13px] uppercase tracking-widest btn-press">
