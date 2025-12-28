@@ -19,6 +19,7 @@ const App: React.FC = () => {
   const [activeView, setActiveView] = useState<View>('wallet');
   const [sortOrder, setSortOrder] = useState<SortOrder>('default');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   
   const [language, setLanguage] = useState<Language>(() => {
     return (localStorage.getItem('demo_wallet_lang') as Language) || 'ru';
@@ -30,7 +31,6 @@ const App: React.FC = () => {
   
   const t = translations[language];
 
-  // Multi-wallet State with isolated transactions
   const [wallets, setWallets] = useState<Wallet[]>(() => {
     const saved = localStorage.getItem('demo_wallets');
     if (saved) return JSON.parse(saved);
@@ -45,7 +45,6 @@ const App: React.FC = () => {
     return wallets.find(w => w.id === activeWalletId) || wallets[0];
   }, [wallets, activeWalletId]);
 
-  // Handle Asset Sorting
   const sortedAssets = useMemo(() => {
     let list = [...activeWallet.assets];
     if (sortOrder === 'asc') {
@@ -53,11 +52,8 @@ const App: React.FC = () => {
     } else if (sortOrder === 'desc') {
       list.sort((a, b) => (b.balance * b.priceUsd) - (a.balance * a.priceUsd));
     }
-    // 'default' returns the original order from INITIAL_ASSETS
     return list;
   }, [activeWallet.assets, sortOrder]);
-
-  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
 
   const fetchPrices = useCallback(async () => {
     try {
@@ -119,8 +115,8 @@ const App: React.FC = () => {
   }, [activeWallet]);
 
   const navigateTo = (view: View, assetId: string | null = null) => {
-    setActiveView(view);
     if (assetId) setSelectedAssetId(assetId);
+    setActiveView(view);
   };
 
   const handleUpdateBalance = (assetId: string, newBalance: number) => {
@@ -180,7 +176,6 @@ const App: React.FC = () => {
   };
 
   const handleReset = () => {
-    // Resetting only balances and history for all wallets, keeping the wallet entities
     setWallets(prev => prev.map(w => ({
       ...w,
       assets: w.assets.map(a => ({ ...a, balance: 0 })),
@@ -205,9 +200,14 @@ const App: React.FC = () => {
           />
         );
       case 'asset-detail':
+        const selectedAsset = activeWallet.assets.find(a => a.id === selectedAssetId);
+        if (!selectedAsset) {
+          // Fallback if state hasn't updated yet to prevent white screen crash
+          return <div className="h-full bg-white dark:bg-black" />;
+        }
         return (
           <AssetDetailView 
-            asset={activeWallet.assets.find(a => a.id === selectedAssetId)!}
+            asset={selectedAsset}
             transactions={activeWallet.transactions.filter(tx => tx.assetId === selectedAssetId || tx.toAssetId === selectedAssetId)}
             onBack={() => navigateTo('wallet')}
             onAction={(view) => navigateTo(view, selectedAssetId)}

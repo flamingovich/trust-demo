@@ -81,7 +81,7 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
           <ScanLine size={22} strokeWidth={1.5} />
         </button>
         <button onClick={() => onAction('wallet-manager')} className="flex items-center space-x-1 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 btn-press transition-all">
-          <span className="text-[14px] font-medium tracking-tight">{walletName}</span>
+          <span className="text-[14px] font-semibold tracking-tight">{walletName}</span>
           <ChevronDown size={14} strokeWidth={2} />
         </button>
         <button className="p-2 text-zinc-500 dark:text-zinc-400 btn-press">
@@ -93,10 +93,10 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
       </div>
 
       <div className="text-center mt-6 mb-8 shrink-0">
-        <h1 className="text-[44px] font-medium tracking-tight leading-none mb-2">
+        <h1 className="text-[44px] font-semibold tracking-tight leading-none mb-2">
           {formatCurrency(totalBalance)} $
         </h1>
-        <div className="flex items-center justify-center space-x-1.5 text-green-600 dark:text-green-500 font-medium text-sm bg-green-500/5 py-1 px-3 rounded-full w-fit mx-auto">
+        <div className="flex items-center justify-center space-x-1.5 text-green-600 dark:text-green-500 font-semibold text-sm bg-green-500/5 py-1 px-3 rounded-full w-fit mx-auto">
           <Plus size={14} strokeWidth={2} />
           <span>1,17 $ (+0,08%)</span>
         </div>
@@ -117,16 +117,16 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
             >
               <action.icon size={22} strokeWidth={2} />
             </button>
-            <span className="text-[12px] font-medium text-zinc-900 dark:text-zinc-200">{action.label}</span>
+            <span className="text-[12px] font-semibold text-zinc-900 dark:text-zinc-200">{action.label}</span>
           </div>
         ))}
       </div>
 
       <div className="flex items-center justify-between px-6 border-b border-zinc-100 dark:border-white/5 mb-2 shrink-0">
         <div className="flex space-x-6">
-          <button className="pb-3 border-b-2 border-blue-600 font-medium text-[16px] text-zinc-900 dark:text-white">{t.crypto}</button>
-          <button className="pb-3 text-zinc-400 font-medium text-[16px]">Prediction</button>
-          <button className="pb-3 text-zinc-400 font-medium text-[16px]">{t.nfts}</button>
+          <button className="pb-3 border-b-2 border-blue-600 font-semibold text-[16px] text-zinc-900 dark:text-white">{t.crypto}</button>
+          <button className="pb-3 text-zinc-400 font-semibold text-[16px]">Prediction</button>
+          <button className="pb-3 text-zinc-400 font-semibold text-[16px]">{t.nfts}</button>
         </div>
         <div className="flex items-center space-x-4 pb-3">
           <button onClick={() => onAction('history')} className="text-zinc-500 dark:text-zinc-400 btn-press">
@@ -161,8 +161,8 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
               </div>
               <div className="min-w-0">
                 <div className="flex items-center space-x-2">
-                  <h3 className="font-medium text-[16px] leading-tight">{asset.symbol}</h3>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-900 text-zinc-500 font-medium uppercase tracking-wider">
+                  <h3 className="font-semibold text-[16px] leading-tight">{asset.symbol}</h3>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-900 text-zinc-500 font-semibold uppercase tracking-wider">
                     {asset.network}
                   </span>
                 </div>
@@ -175,7 +175,7 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
               </div>
             </div>
             <div className="text-right">
-              <p className="font-medium text-[17px] leading-tight tracking-tight">
+              <p className="font-semibold text-[17px] leading-tight tracking-tight">
                 {formatToken(asset.balance)}
               </p>
               <p className="text-[13px] text-zinc-500 font-normal">
