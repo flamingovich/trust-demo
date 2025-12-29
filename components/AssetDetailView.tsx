@@ -52,14 +52,14 @@ const AssetDetailView: React.FC<Props> = ({ asset, transactions = [], onBack, on
       <div className="flex-1 overflow-y-auto no-scrollbar">
         <div className="flex flex-col items-center py-10 px-6">
           <div className="relative mb-6">
-            <div className="w-20 h-20 rounded-full bg-zinc-50 dark:bg-dark-surface flex items-center justify-center shadow-lg border border-zinc-100 dark:border-dark-border">
+            <div className="w-24 h-24 rounded-full bg-zinc-50 dark:bg-dark-surface flex items-center justify-center shadow-lg border border-zinc-100 dark:border-dark-border">
               <img 
                 src={asset?.logoUrl} 
                 alt="" 
-                className="w-12 h-12 object-contain rounded-[22%]"
+                className="w-14 h-14 object-contain rounded-[22%]"
               />
             </div>
-            <div className="absolute -bottom-1 -right-1 px-3 py-1 rounded-full bg-zinc-100 dark:bg-dark-elevated border-2 border-white dark:border-dark-bg text-[10px] font-extrabold uppercase tracking-widest text-zinc-500 shadow-sm">
+            <div className="absolute -bottom-1 -right-1 px-4 py-1.5 rounded-full bg-zinc-100 dark:bg-dark-elevated border-2 border-white dark:border-dark-bg text-[11px] font-extrabold uppercase tracking-widest text-zinc-500 shadow-sm">
               {asset?.network}
             </div>
           </div>
@@ -81,10 +81,10 @@ const AssetDetailView: React.FC<Props> = ({ asset, transactions = [], onBack, on
             { id: 'swap', label: t.swap, icon: <Repeat size={28} strokeWidth={2.5} />, bg: 'bg-zinc-100 dark:bg-dark-surface' }
           ].map((action) => (
             <div key={action.id} className="flex flex-col items-center space-y-2">
-              <button onClick={() => onAction(action.id as View)} className={`w-[64px] h-[64px] ${action.bg} rounded-[24px] flex items-center justify-center btn-press transition-all`}>
+              <button onClick={() => onAction(action.id as View)} className={`w-[68px] h-[68px] ${action.bg} rounded-[26px] flex items-center justify-center btn-press transition-all`}>
                 {action.icon}
               </button>
-              <span className="text-[11px] font-bold text-zinc-900 dark:text-zinc-300 uppercase tracking-tighter">{action.label}</span>
+              <span className="text-[12px] font-bold text-zinc-900 dark:text-zinc-300 uppercase tracking-tighter">{action.label}</span>
             </div>
           ))}
         </div>
@@ -105,21 +105,21 @@ const AssetDetailView: React.FC<Props> = ({ asset, transactions = [], onBack, on
                 <div 
                   key={tx.id} 
                   onClick={() => setSelectedTx(tx)}
-                  className="flex items-center justify-between p-4 bg-white dark:bg-dark-surface/50 rounded-[28px] border border-zinc-100/50 dark:border-white/5 active:bg-zinc-50 transition-all cursor-pointer btn-press"
+                  className="flex items-center justify-between p-4 bg-white dark:bg-dark-surface/50 rounded-[32px] border border-zinc-100/50 dark:border-white/5 active:bg-zinc-50 transition-all cursor-pointer btn-press"
                 >
                   <div className="flex items-center space-x-4 min-w-0">
-                    <div className="w-10 h-10 rounded-2xl bg-[#F8FAFC] dark:bg-dark-elevated flex items-center justify-center shadow-sm">
-                      {tx.type === 'receive' ? <ArrowDownLeft size={20} className="text-green-500" strokeWidth={2.5} /> : tx.type === 'swap' ? <Repeat size={20} className="text-[#3262F1]" strokeWidth={2.5} /> : <ArrowUpRight size={20} className="text-zinc-400" strokeWidth={2.5} />}
+                    <div className="w-11 h-11 rounded-2xl bg-[#F8FAFC] dark:bg-dark-elevated flex items-center justify-center shadow-sm">
+                      {tx.type === 'receive' ? <ArrowDownLeft size={22} className="text-green-500" strokeWidth={2.5} /> : tx.type === 'swap' ? <Repeat size={22} className="text-[#3262F1]" strokeWidth={2.5} /> : <ArrowUpRight size={22} className="text-zinc-400" strokeWidth={2.5} />}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center space-x-1.5">
-                        <p className="font-bold text-[14px] text-[#1A1C1E] dark:text-white">
+                        <p className="font-bold text-[15px] text-[#1A1C1E] dark:text-white">
                           {tx.type === 'receive' ? t.receive : tx.type === 'swap' ? t.swap : t.send}
                         </p>
-                        <Check size={10} strokeWidth={4} className="text-green-500" />
+                        <Check size={12} strokeWidth={4} className="text-green-500" />
                       </div>
                       <div className="flex flex-col">
-                        <p className="text-[11px] text-[#A2ABB8] font-bold tracking-tight uppercase leading-none mt-0.5">
+                        <p className="text-[12px] text-[#A2ABB8] font-bold tracking-tight uppercase leading-none mt-0.5">
                           {new Date(tx.timestamp).toLocaleDateString()}
                         </p>
                       </div>
@@ -128,17 +128,17 @@ const AssetDetailView: React.FC<Props> = ({ asset, transactions = [], onBack, on
                   <div className="text-right shrink-0">
                     {tx.type === 'swap' ? (
                       <div className="flex flex-col items-end">
-                        <p className="font-bold text-[13px] tracking-tight text-[#1A1C1E] dark:text-white">
+                        <p className="font-bold text-[14px] tracking-tight text-[#1A1C1E] dark:text-white">
                           {formatVal(tx.amount)} {getSymbolById(tx.assetId)}
                         </p>
                         <p className="text-[11px] text-[#A2ABB8] font-bold tracking-tighter">→ {formatVal(tx.toAmount || 0)} {getSymbolById(tx.toAssetId || '')}</p>
                       </div>
                     ) : (
                       <>
-                        <p className={`font-bold text-[16px] tracking-tight ${tx.type === 'receive' ? 'text-green-600' : 'text-[#1A1C1E] dark:text-white'}`}>
+                        <p className={`font-bold text-[17px] tracking-tight ${tx.type === 'receive' ? 'text-green-600' : 'text-[#1A1C1E] dark:text-white'}`}>
                           {tx.type === 'receive' ? '+' : '-'}{formatVal(tx.amount)} {asset.symbol}
                         </p>
-                        <p className="text-[12px] text-[#A2ABB8] font-bold tracking-tighter">{formatPrice(tx.amount * price)}</p>
+                        <p className="text-[13px] text-[#A2ABB8] font-bold tracking-tighter">{formatPrice(tx.amount * price)}</p>
                       </>
                     )}
                   </div>
