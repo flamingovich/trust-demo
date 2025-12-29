@@ -42,7 +42,6 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    // Обновление срабатывает только если мы в самом верху списка токенов
     if (listRef.current?.scrollTop === 0) {
       touchStartRef.current = e.touches[0].clientY;
       isPulling.current = true;
@@ -56,11 +55,9 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
     const currentY = e.touches[0].clientY;
     const distance = currentY - touchStartRef.current;
     
-    // Тянем только вниз и только если мы на самом верху
     if (distance > 0) {
       setPullDistance(Math.min(distance * 0.4, 80));
     } else {
-      // Если начали тянуть вверх, отменяем "пулл"
       isPulling.current = false;
       setPullDistance(0);
     }
@@ -74,7 +71,6 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
 
   const handleCopy = (type: 'bitcoin' | 'evm' | 'tron') => {
     const addr = USER_ADDRESSES[type];
-    // Используем современное API для копирования
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(addr).then(() => {
         setCopiedNetwork(type);
@@ -84,7 +80,6 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
         }, 1200);
       });
     } else {
-      // Фолбэк для старых браузеров
       const textArea = document.createElement("textarea");
       textArea.value = addr;
       document.body.appendChild(textArea);
@@ -216,11 +211,11 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
                     </div>
                 </div>
 
-                <div ref={listRef} className="flex-1 overflow-y-auto no-scrollbar px-3 md:px-6 pb-6 pt-2 space-y-1 md:space-y-2">
+                <div ref={listRef} className="flex-1 overflow-y-auto no-scrollbar px-3 md:px-6 pb-6 pt-2 space-y-0.5 md:space-y-1">
                     {assets.map((asset) => (
                     <div 
                         key={asset.id} 
-                        className="flex items-center justify-between p-3 md:p-4 bg-transparent dark:bg-transparent rounded-[22px] md:rounded-[28px] hover:bg-zinc-50 dark:hover:bg-dark-elevated/20 active:bg-zinc-100 transition-all cursor-pointer group"
+                        className="flex items-center justify-between py-2 px-3 md:p-4 bg-transparent dark:bg-transparent rounded-[22px] md:rounded-[28px] hover:bg-zinc-50 dark:hover:bg-dark-elevated/20 active:bg-zinc-100 transition-all cursor-pointer group"
                         onClick={() => onAction('asset-detail', asset.id)}
                     >
                         <div className="flex items-center space-x-3.5 md:space-x-5">
@@ -230,7 +225,10 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
                                 </div>
                             </div>
                             <div className="min-w-0">
-                                <h3 className="font-bold text-[15px] md:text-[18px] leading-tight text-zinc-900 dark:text-zinc-100">{asset.symbol}</h3>
+                                <div className="flex items-center space-x-2">
+                                    <h3 className="font-bold text-[15px] md:text-[18px] leading-tight text-zinc-900 dark:text-zinc-100">{asset.symbol}</h3>
+                                    <span className="text-[9px] md:text-[10px] font-bold text-blue-500 bg-blue-500/5 px-1.5 py-0.5 rounded-md uppercase tracking-wider">{asset.network}</span>
+                                </div>
                                 <div className="flex items-center space-x-2 mt-0.5 md:mt-1">
                                     <span className="text-[11px] md:text-[13px] font-bold text-zinc-400 tracking-tight">{formatPrice(asset.priceUsd)}</span>
                                     <span className={`text-[10px] md:text-[12px] font-extrabold ${asset.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
@@ -250,7 +248,7 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
                     </div>
                     ))}
                     
-                    <button className="w-full py-4.5 md:py-6 bg-zinc-50/50 dark:bg-dark-surface/50 rounded-[22px] md:rounded-[32px] flex items-center justify-center space-x-2.5 text-zinc-400 font-bold text-[11px] md:text-[13px] hover:bg-zinc-100 transition-colors uppercase tracking-widest mt-2 border border-dashed border-zinc-200 dark:border-dark-border">
+                    <button className="w-full py-4 md:py-6 bg-zinc-50/50 dark:bg-dark-surface/50 rounded-[22px] md:rounded-[32px] flex items-center justify-center space-x-2.5 text-zinc-400 font-bold text-[11px] md:text-[13px] hover:bg-zinc-100 transition-colors uppercase tracking-widest mt-2 border border-dashed border-zinc-200 dark:border-dark-border">
                         <Plus size={14} className="md:w-5 md:h-5" />
                         <span>{t.manage}</span>
                     </button>
