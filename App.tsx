@@ -13,6 +13,7 @@ import HistoryView from './components/HistoryView';
 import AssetDetailView from './components/AssetDetailView';
 import WalletManagerView from './components/WalletManagerView';
 import BottomNav from './components/BottomNav';
+import Sidebar from './components/Sidebar';
 import { translations } from './translations';
 
 const App: React.FC = () => {
@@ -21,7 +22,6 @@ const App: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   
-  // Реф для отслеживания времени последнего обновления цен
   const lastPriceFetchRef = useRef<number>(0);
 
   const [language, setLanguage] = useState<Language>(() => {
@@ -37,7 +37,6 @@ const App: React.FC = () => {
   });
 
   const [rubRate, setRubRate] = useState<number>(92.5); 
-  
   const t = translations[language];
 
   const [wallets, setWallets] = useState<Wallet[]>(() => {
@@ -86,30 +85,19 @@ const App: React.FC = () => {
       if (!res.ok) throw new Error();
       const data = await res.json();
       if (data && data.rates && data.rates.RUB) setRubRate(data.rates.RUB);
-    } catch (e) { /* Игнорируем ошибки для фонового обновления */ }
+    } catch (e) {}
   };
 
   const fetchPrices = useCallback(async (force = false) => {
     if (!force && Date.now() - lastPriceFetchRef.current < 30000) return;
-
     try {
       const currentAssets = activeWallet.assets;
       if (!currentAssets || currentAssets.length === 0) return;
-
-      const cgIds = currentAssets
-        .map(a => CG_ID_MAP[a.id] || a.id)
-        .join(',');
-      
+      const cgIds = currentAssets.map(a => CG_ID_MAP[a.id] || a.id).join(',');
       const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cgIds}&vs_currencies=usd&include_24hr_change=true`);
-      
-      if (!response.ok) {
-        if (response.status === 429) return;
-        throw new Error('API Error');
-      }
-      
+      if (!response.ok) return;
       const data = await response.json();
       lastPriceFetchRef.current = Date.now();
-      
       setWallets(prev => prev.map(wallet => {
         if (wallet.id !== activeWalletId) return wallet;
         return {
@@ -127,7 +115,7 @@ const App: React.FC = () => {
           })
         };
       }));
-    } catch (error) { }
+    } catch (error) {}
   }, [activeWallet.assets, activeWalletId]);
 
   const handleRefresh = async () => {
@@ -150,7 +138,6 @@ const App: React.FC = () => {
     localStorage.setItem('demo_wallet_lang', language);
     localStorage.setItem('demo_wallet_theme', theme);
     localStorage.setItem('demo_wallet_currency', currency);
-    
     const root = window.document.documentElement;
     if (theme === 'dark') root.classList.add('dark');
     else root.classList.remove('dark');
@@ -179,7 +166,6 @@ const App: React.FC = () => {
       hash: `0x${Math.random().toString(16).slice(2, 12)}${Math.random().toString(16).slice(2, 12)}...`,
       networkFee: '0.85 USD'
     };
-    
     setWallets(prev => prev.map(w => {
       if (w.id === activeWalletId) {
         const updatedAssets = w.assets.map(a => {
@@ -223,10 +209,8 @@ const App: React.FC = () => {
       alert(language === 'ru' ? 'Недостаточно USDT!' : 'Insufficient USDT!');
       return;
     }
-
     const tokenAmount = usdtAmount / tokenData.current_price;
     const existingAsset = activeWallet.assets.find(a => a.id === tokenData.id);
-
     setWallets(prev => prev.map(w => {
       if (w.id === activeWalletId) {
         let newAssets = w.assets.map(a => {
@@ -234,7 +218,6 @@ const App: React.FC = () => {
           if (a.id === tokenData.id) return { ...a, balance: a.balance + tokenAmount };
           return a;
         });
-
         if (!existingAsset) {
           const newAsset: Asset = {
             id: tokenData.id,
@@ -250,7 +233,6 @@ const App: React.FC = () => {
           };
           newAssets.push(newAsset);
         }
-
         const tx: Transaction = {
           id: Math.random().toString(36).substr(2, 9),
           assetId: 'usdt-tron',
@@ -262,7 +244,6 @@ const App: React.FC = () => {
           status: 'confirmed',
           hash: `0x${Math.random().toString(16).slice(2, 10)}...`
         };
-
         return { ...w, assets: newAssets, transactions: [tx, ...(w.transactions || [])] };
       }
       return w;
@@ -299,16 +280,28 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className={`flex justify-center min-h-screen transition-colors duration-500 ${theme === 'dark' ? 'bg-[#0a0a0b]' : 'bg-zinc-100'}`}>
-      <div className="w-full max-w-[430px] h-screen bg-white dark:bg-dark-bg flex flex-col relative overflow-hidden shadow-2xl border-x border-zinc-200 dark:border-dark-border pt-safe pb-safe soft-bg-glow">
-        <main className="flex-1 overflow-y-auto ios-scroll no-scrollbar relative">
-          <div key={activeView} className="h-full w-full absolute inset-0 overflow-hidden view-transition-enter">
-            {renderView()}
-          </div>
-        </main>
-        {['wallet', 'swap', 'discover', 'settings'].includes(activeView) && (
-          <BottomNav activeView={activeView} onViewChange={(view) => navigateTo(view)} t={t} />
-        )}
+    <div className={`flex flex-col md:flex-row h-screen w-full transition-colors duration-500 ${theme === 'dark' ? 'bg-[#0a0a0b]' : 'bg-white'}`}>
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex">
+        <Sidebar activeView={activeView} onViewChange={(v) => navigateTo(v)} t={t} theme={theme} />
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex justify-center h-full relative overflow-hidden">
+        <div className="w-full h-full flex flex-col relative">
+            <main className="flex-1 overflow-y-auto ios-scroll no-scrollbar relative">
+                <div key={activeView} className="h-full w-full absolute inset-0 overflow-hidden view-transition-enter">
+                    {renderView()}
+                </div>
+            </main>
+            
+            {/* Mobile Bottom Nav */}
+            <div className="md:hidden">
+                {['wallet', 'swap', 'discover', 'settings'].includes(activeView) && (
+                <BottomNav activeView={activeView} onViewChange={(view) => navigateTo(view)} t={t} />
+                )}
+            </div>
+        </div>
       </div>
     </div>
   );
