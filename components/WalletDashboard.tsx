@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { Asset, View, SortOrder } from '../types';
 import { ArrowUpRight, Plus, Repeat, Landmark, Settings, ScanLine, Copy, ChevronDown, History, SlidersHorizontal, Loader2, X, Check, Triangle } from 'lucide-react';
+import { USER_ADDRESSES } from '../constants';
 
 interface Props {
   assets: Asset[];
@@ -29,6 +30,7 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
   const [copiedNetwork, setCopiedNetwork] = useState<string | null>(null);
   const touchStartRef = useRef(0);
   const isPulling = useRef(false);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const balanceChangeUsd = totalBalance * 0.0008;
   const isPositive = balanceChangeUsd >= 0;
@@ -40,9 +42,12 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.currentTarget.scrollTop === 0) {
+    // Обновление срабатывает только если мы в самом верху списка токенов
+    if (listRef.current?.scrollTop === 0) {
       touchStartRef.current = e.touches[0].clientY;
       isPulling.current = true;
+    } else {
+      isPulling.current = false;
     }
   };
 
@@ -50,8 +55,14 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
     if (!isPulling.current) return;
     const currentY = e.touches[0].clientY;
     const distance = currentY - touchStartRef.current;
+    
+    // Тянем только вниз и только если мы на самом верху
     if (distance > 0) {
       setPullDistance(Math.min(distance * 0.4, 80));
+    } else {
+      // Если начали тянуть вверх, отменяем "пулл"
+      isPulling.current = false;
+      setPullDistance(0);
     }
   };
 
@@ -62,19 +73,34 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
   };
 
   const handleCopy = (type: 'bitcoin' | 'evm' | 'tron') => {
-    // Demo Logic
-    setCopiedNetwork(type);
-    setTimeout(() => {
-      setCopiedNetwork(null);
-      setShowCopyMenu(false);
-    }, 1200);
+    const addr = USER_ADDRESSES[type];
+    // Используем современное API для копирования
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(addr).then(() => {
+        setCopiedNetwork(type);
+        setTimeout(() => {
+          setCopiedNetwork(null);
+          setShowCopyMenu(false);
+        }, 1200);
+      });
+    } else {
+      // Фолбэк для старых браузеров
+      const textArea = document.createElement("textarea");
+      textArea.value = addr;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setCopiedNetwork(type);
+      setTimeout(() => {
+        setCopiedNetwork(null);
+        setShowCopyMenu(false);
+      }, 1200);
+    }
   };
 
   return (
     <div 
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
       className="flex flex-col h-full bg-[#fcfcfd] dark:bg-dark-bg text-black dark:text-zinc-100 transition-colors duration-300 relative animate-fade-in md:px-12 md:py-8"
       style={{ transform: `translateY(${pullDistance}px)`, transition: pullDistance === 0 ? 'transform 0.3s ease-out' : 'none' }}
     >
@@ -82,7 +108,7 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
         <Loader2 className={`text-blue-600 ${isRefreshing || pullDistance > 60 ? 'animate-spin' : ''}`} size={24} />
       </div>
 
-      {/* Header - Mobile Only or PC Adaptive */}
+      {/* Header */}
       <div className="px-5 pt-4 flex justify-between items-center shrink-0 mb-2 md:mb-10">
         <button 
           onClick={() => onAction('wallet-manager')}
@@ -110,10 +136,7 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
         </div>
       </div>
 
-      {/* Main Responsive Grid */}
       <div className="flex-1 flex flex-col md:flex-row md:space-x-12 min-h-0">
-        
-        {/* Left Column: Balance & Actions */}
         <div className="md:w-[400px] shrink-0">
             {/* Balance Card */}
             <div className="px-3 md:px-0 mb-4 shrink-0">
@@ -125,15 +148,18 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
                             <Copy size={13} />
                         </button>
                     </div>
-                    <h1 className="text-[34px] md:text-[48px] font-extrabold tracking-tighter leading-none mb-3 md:mb-6 text-black dark:text-white">
-                        {formatPrice(totalBalance)}
-                    </h1>
-                    <div className={`flex items-center space-x-1.5 font-bold text-[13px] md:text-[16px] ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                    
+                    <div className="flex items-center justify-between">
+                        <h1 className="text-[34px] md:text-[48px] font-extrabold tracking-tighter leading-none text-black dark:text-white">
+                            {formatPrice(totalBalance)}
+                        </h1>
+                    </div>
+
+                    <div className={`mt-3 md:mt-6 flex items-center space-x-1.5 font-bold text-[13px] md:text-[16px] ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
                         <Triangle size={10} fill="currentColor" className={`${!isPositive ? 'rotate-180' : ''}`} />
                         <span>{isPositive ? '+' : '-'}{formatPrice(Math.abs(balanceChangeUsd))} (+0,08%)</span>
                     </div>
                 </div>
-                {/* Background Decoration */}
                 <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 rounded-full blur-[40px] pointer-events-none"></div>
                 </div>
             </div>
@@ -162,9 +188,14 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
             </div>
         </div>
 
-        {/* Right Column: Assets List */}
+        {/* Assets List */}
         <div className="px-3 md:px-0 flex-1 min-h-0 flex flex-col mb-4 md:mb-0">
-            <div className="flex-1 bg-white dark:bg-dark-surface rounded-[28px] md:rounded-[36px] border border-zinc-200/50 dark:border-dark-border shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col overflow-hidden">
+            <div 
+                className="flex-1 bg-white dark:bg-dark-surface rounded-[28px] md:rounded-[36px] border border-zinc-200/50 dark:border-dark-border shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col overflow-hidden"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+            >
                 <div className="flex items-center justify-between px-6 md:px-8 py-4 md:py-6 shrink-0 border-b border-zinc-50/50 dark:border-dark-border/30">
                     <div className="flex space-x-6 md:space-x-10">
                         <button className="text-[15px] md:text-[18px] font-extrabold text-zinc-900 dark:text-zinc-100 border-b-2 md:border-b-3 border-blue-600 pb-1">
@@ -185,7 +216,7 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto no-scrollbar px-3 md:px-6 pb-6 pt-2 space-y-1 md:space-y-2">
+                <div ref={listRef} className="flex-1 overflow-y-auto no-scrollbar px-3 md:px-6 pb-6 pt-2 space-y-1 md:space-y-2">
                     {assets.map((asset) => (
                     <div 
                         key={asset.id} 
