@@ -122,6 +122,12 @@ const SwapView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSwap, t, 
 
   const isInsufficient = parseFloat(fromAmount) > fromAsset.balance;
 
+  // Стиль для плавного затухания текста (fade effect)
+  const fadeStyle: React.CSSProperties = {
+    WebkitMaskImage: 'linear-gradient(to right, black 82%, transparent 100%)',
+    maskImage: 'linear-gradient(to right, black 82%, transparent 100%)',
+  };
+
   return (
     <div className="h-full bg-[#F5F7F9] dark:bg-black flex flex-col items-center animate-ios-slide-in relative transition-colors overflow-hidden">
       <div className="w-full max-w-xl px-4 pt-6 flex flex-col h-full">
@@ -134,10 +140,10 @@ const SwapView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSwap, t, 
           <div className="w-10"></div>
         </div>
 
-        <div className="flex-1 overflow-y-auto no-scrollbar space-y-1 pb-24 px-1 mt-1">
+        <div className="flex-1 overflow-y-auto no-scrollbar space-y-0.5 pb-24 px-1 mt-1">
           {/* Section: From */}
-          <div className="bg-white dark:bg-zinc-900 rounded-[28px] p-5 pb-5 shadow-sm border border-zinc-100/50 dark:border-white/5">
-            <div className="flex justify-between items-center mb-3.5 px-0.5">
+          <div className="bg-white dark:bg-zinc-900 rounded-[28px] p-5 pb-6 shadow-sm border border-zinc-100/50 dark:border-white/5 relative z-0">
+            <div className="flex justify-between items-center mb-4 px-0.5">
               <span className="text-zinc-400 text-[13px] font-bold uppercase tracking-wider">{language === 'ru' ? 'Из' : 'From'}</span>
               <div className="flex items-center space-x-1.5">
                 <Wallet size={14} className="text-zinc-300" />
@@ -169,15 +175,17 @@ const SwapView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSwap, t, 
                   <p className="text-[12px] text-zinc-400 font-bold opacity-60 mt-0.5">{fromAsset.network || 'Tron'}</p>
                 </div>
               </button>
-              <div className="text-right flex-1 min-w-0 ml-4">
-                <input 
-                  type="number"
-                  inputMode="decimal"
-                  value={fromAmount}
-                  onChange={(e) => setFromAmount(e.target.value)}
-                  placeholder="0"
-                  className="bg-transparent text-right text-[30px] font-extrabold w-full focus:outline-none placeholder-zinc-200 dark:placeholder-zinc-800 text-[#1A1C1E] dark:text-white tracking-tighter truncate"
-                />
+              <div className="text-right flex-1 min-w-0 ml-4 overflow-hidden relative">
+                <div style={fadeStyle}>
+                  <input 
+                    type="number"
+                    inputMode="decimal"
+                    value={fromAmount}
+                    onChange={(e) => setFromAmount(e.target.value)}
+                    placeholder="0"
+                    className="bg-transparent text-right text-[26px] font-extrabold w-full focus:outline-none placeholder-zinc-200 dark:placeholder-zinc-800 text-[#1A1C1E] dark:text-white tracking-tighter whitespace-nowrap overflow-hidden"
+                  />
+                </div>
                 <p className="text-zinc-400 text-[13px] font-bold tracking-tight mt-0.5 truncate">
                   ${formatValue(parseFloat(fromAmount || '0') * fromAsset.priceUsd, 2)}
                 </p>
@@ -185,19 +193,19 @@ const SwapView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSwap, t, 
             </div>
           </div>
 
-          {/* Switcher Button - More compact overlap */}
-          <div className="flex justify-center -my-6 relative z-10">
+          {/* Switcher Button - Positioned to overlap significantly */}
+          <div className="flex justify-center -my-6.5 relative z-10">
             <button 
               onClick={switchAssets}
-              className="w-10 h-10 bg-white dark:bg-zinc-950 border-4 border-[#F5F7F9] dark:border-black rounded-full flex items-center justify-center text-zinc-400 shadow-md active:rotate-180 transition-all duration-300 hover:scale-105"
+              className="w-10 h-10 bg-white dark:bg-zinc-950 border-[4.5px] border-[#F5F7F9] dark:border-black rounded-full flex items-center justify-center text-zinc-400 shadow-md active:rotate-180 transition-all duration-300 hover:scale-105"
             >
               <ArrowDownUp size={16} strokeWidth={2.5} />
             </button>
           </div>
 
           {/* Section: To */}
-          <div className="bg-white dark:bg-zinc-900 rounded-[24px] p-5 pb-5 shadow-sm border border-zinc-100/50 dark:border-white/5">
-            <div className="flex justify-between items-center mb-3.5 px-0.5">
+          <div className="bg-white dark:bg-zinc-900 rounded-[28px] p-5 pb-6 shadow-sm border border-zinc-100/50 dark:border-white/5 relative z-0">
+            <div className="flex justify-between items-center mb-4 px-0.5">
               <span className="text-zinc-400 text-[13px] font-bold uppercase tracking-wider">{language === 'ru' ? 'В' : 'To'}</span>
               <div className="flex items-center space-x-1.5">
                 <Wallet size={14} className="text-zinc-300" />
@@ -223,9 +231,11 @@ const SwapView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSwap, t, 
                   <p className="text-[12px] text-zinc-400 font-bold opacity-60 mt-0.5">{toAsset.network || 'Tron'}</p>
                 </div>
               </button>
-              <div className="text-right flex-1 min-w-0 ml-4 overflow-hidden">
-                <div className={`text-right text-[30px] font-extrabold tracking-tighter truncate ${isCalculating ? 'opacity-30' : (toAmount ? 'text-[#1A1C1E] dark:text-white' : 'text-zinc-200 dark:text-zinc-800')}`}>
-                  {toAmount ? parseFloat(toAmount).toLocaleString('ru-RU', { maximumFractionDigits: 8 }) : '0'}
+              <div className="text-right flex-1 min-w-0 ml-4 overflow-hidden relative">
+                <div style={fadeStyle}>
+                  <div className={`text-right text-[26px] font-extrabold tracking-tighter whitespace-nowrap overflow-hidden ${isCalculating ? 'opacity-30' : (toAmount ? 'text-[#1A1C1E] dark:text-white' : 'text-zinc-200 dark:text-zinc-800')}`}>
+                    {toAmount ? parseFloat(toAmount).toLocaleString('ru-RU', { maximumFractionDigits: 12 }) : '0'}
+                  </div>
                 </div>
                 <p className="text-zinc-400 text-[13px] font-bold tracking-tight mt-0.5 truncate">
                   ${formatValue(parseFloat(toAmount || '0') * toAsset.priceUsd, 2)}
@@ -235,15 +245,15 @@ const SwapView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSwap, t, 
           </div>
 
           {/* Rate Line */}
-          <div className="flex items-center space-x-2 px-3.5 py-1 bg-white dark:bg-zinc-900/60 rounded-full w-fit mx-auto border border-zinc-100/30 shadow-sm mt-0.5">
+          <div className="flex items-center space-x-2 px-3.5 py-1 bg-white dark:bg-zinc-900/60 rounded-full w-fit mx-auto border border-zinc-100/30 shadow-sm mt-1.5">
             <RefreshCw size={12} className="text-zinc-400" />
             <span className="text-[12px] font-bold text-zinc-700 dark:text-zinc-300">
               1 {fromAsset.symbol} ≈ {exchangeRate.toLocaleString('ru-RU', { maximumFractionDigits: 6 })} {toAsset.symbol}
             </span>
           </div>
 
-          {/* Details Section - Using fixed Tailwind sizes to prevent giant icons */}
-          <div className="bg-white dark:bg-zinc-900/40 rounded-[22px] p-5 space-y-4 border border-zinc-100/50 dark:border-white/5 mt-0.5">
+          {/* Details Section */}
+          <div className="bg-white dark:bg-zinc-900/40 rounded-[24px] p-5 space-y-4 border border-zinc-100/50 dark:border-white/5 mt-1">
             <div className="flex justify-between items-start">
               <span className="text-zinc-500 font-bold text-[13px]">{language === 'ru' ? 'Комиссия свопера' : 'Swap fee'}</span>
               <div className="text-right">
@@ -270,11 +280,11 @@ const SwapView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSwap, t, 
             </div>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-3 pb-4">
             <button 
               disabled={!fromAmount || isInsufficient || isCalculating}
               onClick={handleSwapClick}
-              className={`w-full py-5 rounded-[24px] font-bold text-lg transition-all ${
+              className={`w-full py-5 rounded-[26px] font-bold text-[18px] transition-all ${
                   !fromAmount || isInsufficient || isCalculating
                   ? 'bg-zinc-100 dark:bg-zinc-900 text-zinc-400 cursor-not-allowed border border-transparent' 
                   : 'bg-blue-600 text-white shadow-xl shadow-blue-600/30 btn-press active:scale-95'
