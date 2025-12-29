@@ -156,7 +156,7 @@ const App: React.FC = () => {
   }, [activeWallet]);
 
   const navigateTo = (view: View, assetId: string | null = null) => {
-    setSelectedAssetId(assetId);
+    if (assetId) setSelectedAssetId(assetId);
     setActiveView(view);
   };
 
@@ -201,6 +201,17 @@ const App: React.FC = () => {
     const newWallets = wallets.filter(w => w.id !== id);
     setWallets(newWallets);
     if (activeWalletId === id) setActiveWalletId(newWallets[0].id);
+  };
+
+  const handleReset = () => {
+    localStorage.clear();
+    setWallets([{
+      id: 'wallet-1', 
+      name: language === 'ru' ? 'Основной кошелек' : 'Main Wallet', 
+      assets: INITIAL_ASSETS, 
+      transactions: [] 
+    }]);
+    setActiveWalletId('wallet-1');
   };
 
   const handleBuyToken = (tokenData: any, usdtAmount: number) => {
@@ -265,11 +276,11 @@ const App: React.FC = () => {
       case 'top-up':
         return <TopUpView assets={activeWallet.assets} onBack={() => navigateTo('wallet')} onUpdate={(id, bal) => setWallets(prev => prev.map(w => w.id === activeWalletId ? {...w, assets: w.assets.map(a => a.id === id ? {...a, balance: bal} : a)} : w))} language={language} />;
       case 'swap':
-        return <SwapView assets={activeWallet.assets} onBack={() => navigateTo('wallet')} onSwap={handleAddTransaction} t={t} language={language} formatPrice={formatPrice} />;
+        return <SwapView assets={activeWallet.assets} initialAssetId={selectedAssetId} onBack={() => { setSelectedAssetId(null); navigateTo('wallet'); }} onSwap={handleAddTransaction} t={t} language={language} formatPrice={formatPrice} />;
       case 'history':
         return <HistoryView transactions={activeWallet.transactions} assets={activeWallet.assets} onBack={() => navigateTo('wallet')} t={t} formatPrice={formatPrice} language={language} />;
       case 'settings':
-        return <SettingsView onBack={() => navigateTo('wallet')} language={language} onLanguageChange={setLanguage} theme={theme} onThemeChange={setTheme} currency={currency} onCurrencyChange={setCurrency} onReset={() => setWallets([{id:'wallet-1', name: 'Main', assets: INITIAL_ASSETS, transactions: []}])} t={t} />;
+        return <SettingsView onBack={() => navigateTo('wallet')} language={language} onLanguageChange={setLanguage} theme={theme} onThemeChange={setTheme} currency={currency} onCurrencyChange={setCurrency} onReset={handleReset} t={t} />;
       case 'discover':
         return <DiscoverView onBuy={handleBuyToken} usdtBalance={activeWallet.assets.find(a => a.id === 'usdt-tron')?.balance || 0} language={language} />;
       case 'wallet-manager':
