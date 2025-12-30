@@ -89,67 +89,72 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
         <Loader2 className={`text-blue-600 ${isRefreshing || pullDistance > 40 ? 'animate-spin' : ''}`} size={20} />
       </div>
 
-      {/* Header - Compact */}
-      <div className="px-5 pt-2 flex justify-between items-center shrink-0 mb-2">
+      {/* Header */}
+      <div className="px-5 pt-2 flex justify-between items-center shrink-0 mb-4">
         <button 
           onClick={() => onAction('wallet-manager')}
-          className="flex items-center space-x-2 bg-white dark:bg-dark-surface py-1 pl-1 pr-3 rounded-full border border-zinc-200/40 dark:border-dark-border shadow-sm btn-press"
+          className="flex items-center space-x-2 bg-white dark:bg-dark-surface py-1.5 pl-1.5 pr-3 rounded-full border border-zinc-200/40 dark:border-dark-border shadow-sm btn-press"
         >
-          <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center">
-             <ShieldCheck size={14} className="text-white" />
+          <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center">
+             <ShieldCheck size={16} className="text-white" />
           </div>
           <div className="flex items-center space-x-1">
-            <span className="text-[13px] font-bold tracking-tight">{walletName}</span>
-            <ChevronDown size={10} className="text-zinc-400" />
+            <span className="text-[14px] font-bold tracking-tight">{walletName}</span>
+            <ChevronDown size={12} className="text-zinc-400" />
           </div>
         </button>
         
-        <div className="flex items-center space-x-1">
-          <button className="p-1.5 text-zinc-400 hover:text-blue-600 transition-colors">
-            <ScanLine size={20} />
+        <div className="flex items-center space-x-2">
+          <button className="p-2 text-zinc-400 hover:text-blue-600 transition-colors">
+            <ScanLine size={22} />
           </button>
-          <button onClick={() => onAction('settings')} className="p-1.5 text-zinc-400 hover:text-blue-600 transition-colors">
-            <Settings size={20} />
+          <button onClick={() => onAction('settings')} className="p-2 text-zinc-400 hover:text-blue-600 transition-colors">
+            <Settings size={22} />
           </button>
         </div>
       </div>
 
       <div className="flex-1 flex flex-col md:flex-row md:space-x-8 min-h-0 overflow-hidden">
-        <div className="md:w-[320px] shrink-0 flex flex-col px-4 md:px-0">
-            {/* Balance Card - Tightened for less empty space */}
-            <div className="mb-4 shrink-0">
-                <div className="relative bg-white dark:bg-[#121216] rounded-[24px] py-4 px-5 border border-zinc-200/40 dark:border-white/5 overflow-hidden shadow-sm">
-                    {/* Minimal Background Decor */}
-                    <div className="absolute inset-0 pointer-events-none select-none opacity-[0.015] dark:opacity-[0.01]">
-                        <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" className="absolute -top-4 -right-4 w-20 h-20 grayscale" alt="" />
+        <div className="md:w-[340px] shrink-0 flex flex-col">
+            {/* Balance Card */}
+            <div className="px-4 md:px-0 mb-4 shrink-0">
+                <div className="relative bg-white dark:bg-[#121216] rounded-[32px] p-7 border border-zinc-200/40 dark:border-white/5 overflow-hidden">
+                    {/* Background Decor - Peripheral & Low Opacity */}
+                    <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
+                        <div className="absolute -top-4 -right-4 opacity-[0.03] dark:opacity-[0.02]">
+                            <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" className="w-32 h-32 grayscale rotate-12" alt="" />
+                        </div>
+                        <div className="absolute bottom-2 right-8 opacity-[0.03] dark:opacity-[0.02]">
+                            <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" className="w-24 h-24 grayscale -rotate-12" alt="" />
+                        </div>
                     </div>
 
                     <div className="relative z-10">
-                      <p className="text-zinc-400 dark:text-zinc-500 font-bold text-[9px] uppercase tracking-[0.15em] mb-1">{t.totalBalance}</p>
-                      <h1 className="text-[30px] md:text-[34px] font-bold tracking-tight text-[#1A1C1E] dark:text-white leading-none">
+                      <p className="text-zinc-400 dark:text-zinc-500 font-bold text-[10px] uppercase tracking-[0.2em] mb-2">{t.totalBalance}</p>
+                      <h1 className="text-[36px] md:text-[40px] font-bold tracking-tight text-[#1A1C1E] dark:text-white leading-tight">
                           {formatPrice(totalBalance)}
                       </h1>
 
-                      <div className="mt-2.5 flex items-center space-x-2">
-                          <div className={`flex items-center space-x-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold ${isPositive ? 'text-emerald-600 bg-emerald-500/5' : 'text-red-500 bg-red-500/5'}`}>
-                              <Triangle size={5} fill="currentColor" className={`${!isPositive ? 'rotate-180' : ''}`} />
+                      <div className="mt-4 flex items-center space-x-2">
+                          <div className={`flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[12px] font-bold ${isPositive ? 'text-emerald-600 bg-emerald-500/5' : 'text-red-500 bg-red-500/5'}`}>
+                              <Triangle size={6} fill="currentColor" className={`${!isPositive ? 'rotate-180' : ''}`} />
                               <span>{isPositive ? '+' : '-'}{formatPrice(Math.abs(balanceChangeUsd))}</span>
                           </div>
-                          <span className="text-zinc-100 dark:text-zinc-800 font-light">|</span>
-                          <span className={`text-[10px] font-bold ${isPositive ? 'text-emerald-500' : 'text-red-500'}`}>
+                          <span className="text-zinc-200 dark:text-zinc-800 font-light">|</span>
+                          <span className={`text-[12px] font-bold ${isPositive ? 'text-emerald-500' : 'text-red-500'}`}>
                             0,08%
                           </span>
                       </div>
                       
-                      <button onClick={() => setShowCopyMenu(true)} className="absolute top-0 right-0 p-2 text-zinc-300 dark:text-zinc-800 hover:text-blue-600 transition-colors">
-                          <Copy size={15} />
+                      <button onClick={() => setShowCopyMenu(true)} className="absolute top-0 right-0 p-2 text-zinc-300 dark:text-zinc-700 hover:text-blue-600 transition-colors">
+                          <Copy size={18} />
                       </button>
                     </div>
                 </div>
             </div>
 
-            {/* Action Buttons Bar - Reduced Sizes & Centered */}
-            <div className="mb-4 flex-1 flex flex-col justify-center shrink-0">
+            {/* Action Buttons Bar */}
+            <div className="px-4 md:px-0 mb-6 shrink-0">
                 <div className="flex items-center justify-between">
                     {[
                         { icon: ArrowUpRight, label: t.send, view: 'send' as View },
@@ -160,12 +165,12 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
                         <button 
                             key={i}
                             onClick={() => action.view && onAction(action.view)}
-                            className="flex-1 flex flex-col items-center space-y-1.5 btn-press"
+                            className="flex-1 flex flex-col items-center space-y-2 btn-press"
                         >
-                            <div className="w-[42px] h-[42px] rounded-full bg-blue-600/10 text-blue-600 flex items-center justify-center transition-transform shadow-sm">
-                                <action.icon size={19} strokeWidth={2.5} />
+                            <div className="w-[56px] h-[56px] rounded-full bg-blue-600/10 text-blue-600 flex items-center justify-center transition-transform">
+                                <action.icon size={24} strokeWidth={2.5} />
                             </div>
-                            <span className="text-[11px] font-bold text-[#1A1C1E] dark:text-zinc-200 tracking-tight">
+                            <span className="text-[12px] font-bold text-[#1A1C1E] dark:text-zinc-200 tracking-tight">
                               {action.label}
                             </span>
                         </button>
@@ -174,30 +179,30 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
             </div>
         </div>
 
-        {/* Assets List Section - Tightened for more tokens on screen */}
+        {/* Assets List Section */}
         <div className="px-4 md:px-0 flex-1 min-h-0 flex flex-col mb-4">
-            <div className="flex-1 bg-white dark:bg-dark-surface rounded-[24px] border border-zinc-200/40 dark:border-white/5 flex flex-col overflow-hidden shadow-sm">
-                <div className="flex items-center justify-between px-5 py-2.5 shrink-0 border-b border-zinc-50 dark:border-white/5">
-                    <div className="flex space-x-5">
-                        <button className="text-[13px] font-bold text-blue-600 border-b-2 border-blue-600 pb-1.5">
+            <div className="flex-1 bg-white dark:bg-dark-surface rounded-[32px] border border-zinc-200/40 dark:border-white/5 flex flex-col overflow-hidden shadow-sm">
+                <div className="flex items-center justify-between px-6 py-4 shrink-0 border-b border-zinc-50 dark:border-white/5">
+                    <div className="flex space-x-6">
+                        <button className="text-[14px] font-bold text-blue-600 border-b-2 border-blue-600 pb-2">
                             {t.crypto}
                         </button>
-                        <button className="text-[13px] font-semibold text-zinc-400 pb-1.5">NFTs</button>
-                        <button className="text-[13px] font-semibold text-zinc-400 pb-1.5">Yield</button>
+                        <button className="text-[14px] font-semibold text-zinc-400 pb-2">NFTs</button>
+                        <button className="text-[14px] font-semibold text-zinc-400 pb-2">Yield</button>
                     </div>
-                    <div className="flex items-center space-x-0.5">
+                    <div className="flex items-center space-x-1">
                         <button onClick={() => onAction('history')} className="p-1.5 text-zinc-300 hover:text-blue-600">
-                            <History size={17} />
+                            <History size={20} />
                         </button>
                         <button onClick={toggleSort} className={`p-1.5 rounded-lg ${sortOrder !== 'default' ? 'text-blue-600' : 'text-zinc-300'}`}>
-                            <SlidersHorizontal size={17} />
+                            <SlidersHorizontal size={20} />
                         </button>
                     </div>
                 </div>
 
                 <div 
                   ref={listRef} 
-                  className="flex-1 overflow-y-auto no-scrollbar px-2 pt-1 pb-6"
+                  className="flex-1 overflow-y-auto no-scrollbar px-2 pt-2 pb-6"
                   onTouchStart={handleTouchStart}
                   onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
@@ -205,35 +210,35 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
                     {assets.map((asset) => (
                     <div 
                         key={asset.id} 
-                        className="flex items-center justify-between py-1.5 px-3 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-all cursor-pointer group"
+                        className="flex items-center justify-between py-3 px-4 rounded-2xl hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-all cursor-pointer group"
                         onClick={() => onAction('asset-detail', asset.id)}
                     >
-                        <div className="flex items-center space-x-3 min-w-0">
-                            <div className="w-[34px] h-[34px] rounded-xl bg-zinc-50 dark:bg-dark-bg flex items-center justify-center p-1.5 border border-zinc-100 dark:border-white/5">
+                        <div className="flex items-center space-x-4 min-w-0">
+                            <div className="w-[40px] h-[40px] rounded-xl bg-zinc-50 dark:bg-dark-bg flex items-center justify-center p-2 border border-zinc-100 dark:border-white/5">
                                 <img src={asset.logoUrl} alt="" className="w-full h-full object-contain" />
                             </div>
                             <div className="min-w-0">
-                                <div className="flex items-center space-x-1 mb-0.5">
-                                    <h3 className="font-bold text-[13.5px] text-[#1A1C1E] dark:text-zinc-100 uppercase tracking-tight leading-none">{asset.symbol}</h3>
-                                    <span className="text-[6.5px] font-bold text-blue-500/80 bg-blue-500/10 px-1 rounded-[2.5px] uppercase border border-blue-500/10">{asset.network}</span>
+                                <div className="flex items-center space-x-1.5 mb-0.5">
+                                    <h3 className="font-bold text-[15px] text-[#1A1C1E] dark:text-zinc-100 uppercase tracking-tight">{asset.symbol}</h3>
+                                    <span className="text-[8px] font-bold text-blue-500/80 bg-blue-500/10 px-1 rounded-[4px] uppercase border border-blue-500/10">{asset.network}</span>
                                 </div>
-                                <p className="text-[10.5px] font-medium text-zinc-400 tracking-tight leading-none">{formatPrice(asset.priceUsd)}</p>
+                                <p className="text-[12px] font-medium text-zinc-400 tracking-tight">{formatPrice(asset.priceUsd)}</p>
                             </div>
                         </div>
 
                         <div className="text-right">
-                            <p className="font-bold text-[14.5px] text-[#1A1C1E] dark:text-zinc-100 tracking-tight leading-none">
+                            <p className="font-bold text-[16px] text-[#1A1C1E] dark:text-zinc-100 tracking-tight">
                                 {formatToken(asset.balance)}
                             </p>
-                            <p className={`text-[10.5px] font-medium mt-0.5 leading-none ${asset.change24h >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                            <p className={`text-[12px] font-medium mt-0.5 ${asset.change24h >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
                                 {asset.change24h >= 0 ? '+' : ''}{asset.change24h.toFixed(2)}%
                             </p>
                         </div>
                     </div>
                     ))}
                     
-                    <button className="w-[calc(100%-20px)] mx-2.5 mt-2 py-2.5 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl flex items-center justify-center space-x-2 text-zinc-300 font-bold text-[10px] uppercase tracking-widest hover:bg-zinc-50 transition-colors">
-                        <Plus size={12} strokeWidth={3} />
+                    <button className="w-[calc(100%-24px)] mx-3 mt-4 py-3.5 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl flex items-center justify-center space-x-2 text-zinc-300 font-bold text-[11px] uppercase tracking-widest hover:bg-zinc-50 transition-colors">
+                        <Plus size={14} strokeWidth={3} />
                         <span>{t.manage}</span>
                     </button>
                 </div>
