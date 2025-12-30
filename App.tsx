@@ -14,6 +14,7 @@ import AssetDetailView from './components/AssetDetailView';
 import WalletManagerView from './components/WalletManagerView';
 import BottomNav from './components/BottomNav';
 import Sidebar from './components/Sidebar';
+import LockScreen from './components/LockScreen';
 import { translations } from './translations';
 
 const App: React.FC = () => {
@@ -21,6 +22,7 @@ const App: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<SortOrder>('default');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [isLocked, setIsLocked] = useState<boolean>(true);
   
   const lastPriceFetchRef = useRef<number>(0);
 
@@ -292,6 +294,10 @@ const App: React.FC = () => {
 
   return (
     <div className={`flex flex-col md:flex-row h-screen w-full transition-colors duration-500 ${theme === 'dark' ? 'bg-[#0a0a0b]' : 'bg-white'}`}>
+      {isLocked && (
+        <LockScreen onUnlock={() => setIsLocked(false)} theme={theme} language={language} />
+      )}
+      
       {/* Desktop Sidebar */}
       <div className="hidden md:flex">
         <Sidebar activeView={activeView} onViewChange={(v) => navigateTo(v)} t={t} theme={theme} />
