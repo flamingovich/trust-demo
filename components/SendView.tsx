@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Asset, Transaction } from '../types';
-import { ChevronLeft, QrCode, ShieldCheck, X, ChevronDown, CheckCircle2, Clipboard, Loader2, Info } from 'lucide-react';
+import { ChevronLeft, QrCode, ShieldCheck, X, ChevronDown, CheckCircle2, Clipboard, Loader2, Info, Activity } from 'lucide-react';
 import { USER_ADDRESSES } from '../constants';
 
 interface Props {
@@ -40,7 +40,15 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
   const [isConfirming, setIsConfirming] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('Blockchain validation in progress...');
+  const [statusStep, setStatusStep] = useState(0);
+
+  const statusMessages = useMemo(() => [
+    'Blockchain validation in progress...',
+    'Syncing with TRON nodes...',
+    'Broadcasting signed message...',
+    'Waiting for network confirmation...',
+    'Finalizing block inclusion...'
+  ], []);
 
   // Realistic dynamic Tron fee logic
   const trxPrice = useMemo(() => {
@@ -49,8 +57,6 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
   }, [assets]);
 
   const dynamicFeeTRX = useMemo(() => {
-    // USDT transfers on TRC20 typically cost ~13.5 TRX or ~32 TRX depending on energy
-    // Standard TRX transfers cost ~1.1 TRX
     if (asset.id === 'usdt-tron') return 13.5;
     return 1.1;
   }, [asset.id]);
@@ -61,6 +67,16 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
     const val = amount ? parseFloat(amount) * (asset?.priceUsd || 0) : 0;
     return formatUSD(val);
   }, [amount, asset]);
+
+  useEffect(() => {
+    let interval: any;
+    if (isProcessing) {
+      interval = setInterval(() => {
+        setStatusStep(prev => (prev < statusMessages.length - 1 ? prev + 1 : prev));
+      }, 900);
+    }
+    return () => clearInterval(interval);
+  }, [isProcessing, statusMessages.length]);
 
   const handleNext = () => {
     const numAmount = parseFloat(amount);
@@ -79,11 +95,7 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
 
   const handleFinalSend = () => {
     setIsProcessing(true);
-    
-    // Cycle status messages for better UX
-    setTimeout(() => setStatusMessage('Syncing with TRON nodes...'), 1200);
-    setTimeout(() => setStatusMessage('Broadcasting signed message...'), 2500);
-    setTimeout(() => setStatusMessage('Waiting for confirmation...'), 3800);
+    setStatusStep(0);
 
     setTimeout(() => {
       onSend({
@@ -102,7 +114,7 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
       setTimeout(() => {
         onBack();
       }, 1800);
-    }, 4500);
+    }, 5000);
   };
 
   const getUserAddress = () => {
@@ -127,15 +139,54 @@ const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, 
 
   if (isProcessing) {
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-white dark:bg-black p-10 animate-fade-in text-black dark:text-white">
-        <div className="relative w-24 h-24 mb-10 flex items-center justify-center">
-            <Loader2 className="animate-spin text-[#3262F1]" size={64} strokeWidth={2.5} />
+      <div className="h-full flex flex-col items-center justify-center bg-white dark:bg-black p-10 animate-fade-in text-black dark:text-white relative overflow-hidden">
+        {/* Animated Visualizer */}
+        <div className="relative w-36 h-36 mb-12 flex items-center justify-center">
+            {/* Pulsing rings */}
+            <div className="absolute inset-0 bg-blue-600/5 rounded-full animate-ping"></div>
+            <div className="absolute inset-4 bg-blue-600/10 rounded-full animate-pulse"></div>
+            
+            {/* Main Spinners */}
+            <div className="absolute inset-0 border-4 border-[#3262F1]/10 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-[#3262F1] border-t-transparent rounded-full animate-spin"></div>
+            
+            <Activity className="text-[#3262F1] animate-pulse relative z-10" size={56} strokeWidth={2} />
+
+            {/* Orbiting particles */}
+            {[...Array(8)].map((_, i) => (
+              <div 
+                key={i}
+                className="absolute w-2.5 h-2.5 bg-[#3262F1] rounded-full shadow-lg shadow-[#3262F1]/40"
+                style={{
+                  top: '50%',
+                  left: '50%',
+                  transform: `rotate(${i * 45}deg) translate(72px) rotate(-${i * 45}deg)`,
+                  opacity: statusStep >= i % 5 ? 1 : 0.2,
+                  transition: 'opacity 0.4s ease'
+                }}
+              />
+            ))}
         </div>
+
         <h2 className="text-2xl font-bold tracking-tight text-center">{t.processing}</h2>
-        <div className="mt-4 space-y-2 flex flex-col items-center">
-            <p className="text-zinc-500 text-[15px] font-bold opacity-70 animate-pulse">{statusMessage}</p>
-            <p className="text-zinc-400 text-[11px] font-bold uppercase tracking-[0.2em] opacity-40">TRON Network Validation</p>
+        <div className="mt-6 space-y-3 flex flex-col items-center text-center max-w-[280px]">
+            <p className="text-zinc-500 text-[15px] font-bold h-10 leading-tight transition-all duration-300">
+                {statusMessages[statusStep]}
+            </p>
+            <div className="flex space-x-1">
+               {[...Array(5)].map((_, i) => (
+                 <div 
+                    key={i} 
+                    className={`h-1 rounded-full transition-all duration-500 ${i <= statusStep ? 'w-8 bg-[#3262F1]' : 'w-2 bg-zinc-200 dark:bg-zinc-800'}`}
+                 />
+               ))}
+            </div>
+            <p className="text-zinc-400 text-[11px] font-bold uppercase tracking-[0.2em] opacity-40 mt-2">TRON Mainnet Network</p>
         </div>
+        
+        {/* Glow Effects */}
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-blue-600/5 rounded-full blur-[100px] pointer-events-none"></div>
+        <div className="absolute -top-20 -right-20 w-80 h-80 bg-blue-600/5 rounded-full blur-[100px] pointer-events-none"></div>
       </div>
     );
   }

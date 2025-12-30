@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Asset, Transaction, Language } from '../types';
-import { ChevronLeft, ArrowDownUp, Info, ChevronDown, CheckCircle2, X, Loader2, Wallet, RefreshCw, ShieldCheck, Settings2, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ArrowDownUp, Info, ChevronDown, CheckCircle2, X, Loader2, Wallet, RefreshCw, ShieldCheck, Settings2, ChevronRight, Activity } from 'lucide-react';
 
 interface Props {
   assets: Asset[];
@@ -39,6 +39,18 @@ const SwapView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSwap, t, 
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [statusStep, setStatusStep] = useState(0);
+
+  // Random swap fee between 0.05 and 2.00
+  const randomSwapFee = useMemo(() => (Math.random() * (2.0 - 0.05) + 0.05).toFixed(2), []);
+
+  const processingMessages = useMemo(() => [
+    language === 'ru' ? 'Инициализация обмена...' : 'Initializing swap...',
+    language === 'ru' ? 'Поиск лучшего маршрута...' : 'Finding best route...',
+    language === 'ru' ? 'Валидация блокчейн-узлов...' : 'Validating blockchain nodes...',
+    language === 'ru' ? 'Подписание транзакции...' : 'Signing transaction...',
+    language === 'ru' ? 'Финальное подтверждение...' : 'Final confirmation...'
+  ], [language]);
 
   const exchangeRate = useMemo(() => {
     if (!fromAsset || !toAsset) return 0;
@@ -61,6 +73,16 @@ const SwapView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSwap, t, 
     }
   }, [fromAmount, fromAsset.id, toAsset.id]);
 
+  useEffect(() => {
+    let interval: any;
+    if (isProcessing) {
+      interval = setInterval(() => {
+        setStatusStep(prev => (prev < processingMessages.length - 1 ? prev + 1 : prev));
+      }, 700);
+    }
+    return () => clearInterval(interval);
+  }, [isProcessing, processingMessages.length]);
+
   const handleSwapClick = () => {
     const amount = parseFloat(fromAmount);
     if (!fromAmount || isNaN(amount) || amount <= 0 || amount > fromAsset.balance) return;
@@ -70,6 +92,8 @@ const SwapView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSwap, t, 
   const confirmSwap = () => {
     setShowConfirmation(false);
     setIsProcessing(true);
+    setStatusStep(0);
+    
     setTimeout(() => {
       onSwap({
         id: Math.random().toString(36).substr(2, 9),
@@ -85,7 +109,7 @@ const SwapView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSwap, t, 
       setIsProcessing(false);
       setIsSuccess(true);
       setTimeout(() => onBack(), 1800);
-    }, 2500);
+    }, 4000);
   };
 
   const switchAssets = () => {
@@ -102,27 +126,55 @@ const SwapView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSwap, t, 
 
   if (isSuccess || isProcessing) {
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-white dark:bg-black p-10">
+      <div className="h-full flex flex-col items-center justify-center bg-white dark:bg-black p-10 relative overflow-hidden">
         {isSuccess ? (
-          <div className="flex flex-col items-center animate-scale-in">
+          <div className="flex flex-col items-center animate-scale-in z-10">
             <div className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-600 mb-6">
               <CheckCircle2 size={52} strokeWidth={2.5} />
             </div>
             <h2 className="text-2xl font-bold text-[#1A1C1E] dark:text-white uppercase tracking-tight">{t.done}!</h2>
           </div>
         ) : (
-          <div className="flex flex-col items-center">
-            <Loader2 className="animate-spin text-blue-600 mb-6" size={52} strokeWidth={2.5} />
-            <h2 className="text-xl font-bold text-[#1A1C1E] dark:text-white">{t.processing}</h2>
+          <div className="flex flex-col items-center z-10 w-full px-6 text-center">
+            {/* Blockchain Animation Visual */}
+            <div className="relative w-32 h-32 mb-10">
+              <div className="absolute inset-0 border-4 border-blue-600/10 rounded-full"></div>
+              <div className="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Activity className="text-blue-600 animate-pulse" size={40} />
+              </div>
+              {/* Nodes dots */}
+              {[...Array(6)].map((_, i) => (
+                <div 
+                  key={i}
+                  className="absolute w-2 h-2 bg-blue-600 rounded-full"
+                  style={{
+                    top: '50%',
+                    left: '50%',
+                    transform: `rotate(${i * 60}deg) translate(64px) rotate(-${i * 60}deg)`,
+                    opacity: statusStep >= i ? 1 : 0.2,
+                    transition: 'opacity 0.3s ease'
+                  }}
+                />
+              ))}
+            </div>
+            
+            <h2 className="text-xl font-bold text-[#1A1C1E] dark:text-white mb-2">{t.processing}</h2>
+            <div className="h-6">
+              <p className="text-zinc-400 text-sm font-bold opacity-70 animate-fade-in" key={statusStep}>
+                {processingMessages[statusStep]}
+              </p>
+            </div>
           </div>
         )}
+        {/* Background ambient glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-blue-600/5 rounded-full blur-[80px] pointer-events-none"></div>
       </div>
     );
   }
 
   const isInsufficient = parseFloat(fromAmount) > fromAsset.balance;
 
-  // Стиль для плавного затухания текста (fade effect)
   const fadeStyle: React.CSSProperties = {
     WebkitMaskImage: 'linear-gradient(to right, black 82%, transparent 100%)',
     maskImage: 'linear-gradient(to right, black 82%, transparent 100%)',
@@ -193,7 +245,6 @@ const SwapView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSwap, t, 
             </div>
           </div>
 
-          {/* Switcher Button - Positioned to overlap significantly */}
           <div className="flex justify-center -my-6.5 relative z-10">
             <button 
               onClick={switchAssets}
@@ -261,9 +312,9 @@ const SwapView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSwap, t, 
                   <div className="w-5 h-5 min-w-[20px] rounded-full bg-emerald-500 flex items-center justify-center p-0.5 shadow-sm overflow-hidden shrink-0">
                     <img src="https://cryptologos.cc/logos/tether-usdt-logo.png" className="w-full h-full object-contain brightness-0 invert" alt="" />
                   </div>
-                  <span>$0,91</span>
+                  <span>${randomSwapFee.replace('.', ',')}</span>
                 </div>
-                <p className="text-[11px] text-zinc-400 font-bold opacity-70 mt-0.5 tracking-tight">0.91382192 USDT</p>
+                <p className="text-[11px] text-zinc-400 font-bold opacity-70 mt-0.5 tracking-tight">{randomSwapFee} USDT</p>
               </div>
             </div>
             
