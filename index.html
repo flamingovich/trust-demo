@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>LedgerWallet</title>
+    <title>LedgerWallet | Secure Crypto Wallet</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233262F1'><path d='M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z'/><circle cx='16' cy='12' r='1.5'/></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -17,9 +18,13 @@
                     colors: {
                         dark: {
                             bg: '#0A0A0B',
-                            surface: '#141417',
-                            elevated: '#1C1C21',
-                            border: 'rgba(255, 255, 255, 0.05)'
+                            surface: '#121216',
+                            elevated: '#1C1C22',
+                            border: 'rgba(255, 255, 255, 0.08)'
+                        },
+                        brand: {
+                            blue: '#3262F1',
+                            blueHover: '#2A52CC'
                         }
                     },
                     animation: {
@@ -66,12 +71,14 @@
             font-family: 'Manrope', sans-serif;
             -webkit-tap-highlight-color: transparent;
             overflow: hidden;
-            letter-spacing: -0.01em;
+            letter-spacing: -0.015em;
             height: 100vh;
-            background-color: #f8f9fa;
+            background-color: #fcfcfd;
+            color: #1A1C1E;
         }
         .dark body {
             background-color: #0A0A0B;
+            color: #FFFFFF;
         }
         .ios-scroll {
             -webkit-overflow-scrolling: touch;
@@ -84,20 +91,14 @@
             opacity: 0.9;
             transition: transform 0.1s ease;
         }
-        .glass-panel {
-            /* Blur removed as requested by user */
-            background-color: rgba(0, 0, 0, 0.4);
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-        }
         .pb-safe {
             padding-bottom: env(safe-area-inset-bottom);
         }
         html, body {
             overscroll-behavior: none;
         }
-        h1, h2, h3 {
-            letter-spacing: -0.025em;
+        h1, h2, h3, h4 {
+            letter-spacing: -0.03em;
         }
         .view-transition-enter {
             animation: iosSlideIn 0.4s cubic-bezier(0.32, 1, 0.2, 1) forwards;
@@ -112,7 +113,7 @@
             position: fixed;
             inset: 0;
             z-index: 9999;
-            background: #121214;
+            background: #0A0A0B;
             color: white;
             flex-direction: column;
             align-items: center;
@@ -136,7 +137,7 @@
 </head>
 <body class="transition-colors duration-500">
     <div id="orientation-lock">
-        <div class="animate-bounce mb-4">
+        <div class="animate-bounce mb-4 text-brand-blue">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
         </div>
         <p class="font-bold text-lg">Пожалуйста, используйте вертикальный режим</p>
