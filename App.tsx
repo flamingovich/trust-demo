@@ -162,13 +162,16 @@ const App: React.FC = () => {
     setActiveView(view);
   };
 
-  const handleAddTransaction = (tx: Transaction) => {
+  const handleAddTransaction = (tx: Transaction, toWalletId?: string) => {
+    const hash = `0x${Math.random().toString(16).slice(2, 12)}${Math.random().toString(16).slice(2, 12)}...`;
     const fullTx: Transaction = {
       ...tx,
-      hash: `0x${Math.random().toString(16).slice(2, 12)}${Math.random().toString(16).slice(2, 12)}...`,
+      hash,
       networkFee: '0.85 USD'
     };
+
     setWallets(prev => prev.map(w => {
+      // Logic for the SENDER wallet (active)
       if (w.id === activeWalletId) {
         const updatedAssets = w.assets.map(a => {
           if (a.id === tx.assetId) {
@@ -182,6 +185,23 @@ const App: React.FC = () => {
         });
         return { ...w, assets: updatedAssets, transactions: [fullTx, ...(w.transactions || [])] };
       }
+      
+      // Logic for the RECEIVER wallet (internal transfer)
+      if (toWalletId && w.id === toWalletId && tx.type === 'send') {
+        const updatedAssets = w.assets.map(a => {
+          if (a.id === tx.assetId) {
+            return { ...a, balance: a.balance + tx.amount };
+          }
+          return a;
+        });
+        const receivedTx: Transaction = {
+          ...fullTx,
+          type: 'receive',
+          address: activeWallet.name // Show sender wallet name as origin
+        };
+        return { ...w, assets: updatedAssets, transactions: [receivedTx, ...(w.transactions || [])] };
+      }
+      
       return w;
     }));
   };
@@ -191,7 +211,7 @@ const App: React.FC = () => {
     const newWallet: Wallet = {
       id: newId,
       name: language === 'ru' ? `Кошелек ${wallets.length + 1}` : `Wallet ${wallets.length + 1}`,
-      assets: INITIAL_ASSETS,
+      assets: INITIAL_ASSETS.map(asset => ({ ...asset, balance: 0 })),
       transactions: []
     };
     setWallets([...wallets, newWallet]);
@@ -205,15 +225,22 @@ const App: React.FC = () => {
     if (activeWalletId === id) setActiveWalletId(newWallets[0].id);
   };
 
+  const handleRenameWallet = (id: string, newName: string) => {
+    if (!newName.trim()) return;
+    setWallets(prev => prev.map(w => w.id === id ? { ...w, name: newName } : w));
+  };
+
   const handleReset = () => {
-    localStorage.clear();
-    setWallets([{
-      id: 'wallet-1', 
-      name: language === 'ru' ? 'Основной кошелек' : 'Main Wallet', 
-      assets: INITIAL_ASSETS, 
-      transactions: [] 
-    }]);
-    setActiveWalletId('wallet-1');
+    setWallets(prev => prev.map(w => {
+      if (w.id === activeWalletId) {
+        return {
+          ...w,
+          assets: w.assets.map(a => ({ ...a, balance: 0 })),
+          transactions: []
+        };
+      }
+      return w;
+    }));
   };
 
   const handleBuyToken = (tokenData: any, usdtAmount: number) => {
@@ -272,7 +299,7 @@ const App: React.FC = () => {
         const selectedAsset = activeWallet.assets.find(a => a.id === selectedAssetId);
         return <AssetDetailView asset={selectedAsset} transactions={activeWallet.transactions.filter(tx => tx.assetId === selectedAssetId || tx.toAssetId === selectedAssetId)} onBack={() => navigateTo('wallet')} onAction={(view) => navigateTo(view, selectedAssetId)} t={t} formatPrice={formatPrice} language={language} allAssets={activeWallet.assets} />;
       case 'send':
-        return <SendView assets={activeWallet.assets} initialAssetId={selectedAssetId} onBack={() => navigateTo('wallet')} onSend={handleAddTransaction} t={t} walletName={activeWallet.name} />;
+        return <SendView assets={activeWallet.assets} wallets={wallets.filter(w => w.id !== activeWalletId)} initialAssetId={selectedAssetId} onBack={() => navigateTo('wallet')} onSend={handleAddTransaction} t={t} walletName={activeWallet.name} language={language} />;
       case 'receive':
         return <ReceiveView assets={activeWallet.assets} initialAssetId={selectedAssetId} onBack={() => navigateTo('wallet')} onSimulateReceive={handleAddTransaction} t={t} />;
       case 'top-up':
@@ -286,7 +313,7 @@ const App: React.FC = () => {
       case 'discover':
         return <DiscoverView onBuy={handleBuyToken} usdtBalance={activeWallet.assets.find(a => a.id === 'usdt-tron')?.balance || 0} language={language} />;
       case 'wallet-manager':
-        return <WalletManagerView wallets={wallets} activeWalletId={activeWalletId} onSelect={(id) => { setActiveWalletId(id); navigateTo('wallet'); }} onCreate={handleCreateWallet} onDelete={handleDeleteWallet} onClose={() => navigateTo('wallet')} t={t} language={language} />;
+        return <WalletManagerView wallets={wallets} activeWalletId={activeWalletId} onSelect={(id) => { setActiveWalletId(id); navigateTo('wallet'); }} onCreate={handleCreateWallet} onDelete={handleDeleteWallet} onRename={handleRenameWallet} onClose={() => navigateTo('wallet')} t={t} language={language} />;
       default:
         return <div className="p-10 text-center text-zinc-500">В разработке</div>;
     }
@@ -298,12 +325,10 @@ const App: React.FC = () => {
         <LockScreen onUnlock={() => setIsLocked(false)} theme={theme} language={language} />
       )}
       
-      {/* Desktop Sidebar */}
       <div className="hidden md:flex">
         <Sidebar activeView={activeView} onViewChange={(v) => navigateTo(v)} t={t} theme={theme} />
       </div>
 
-      {/* Main Content Area */}
       <div className="flex-1 flex justify-center h-full relative overflow-hidden">
         <div className="w-full h-full flex flex-col relative">
             <main className="flex-1 overflow-y-auto ios-scroll no-scrollbar relative">
@@ -312,7 +337,6 @@ const App: React.FC = () => {
                 </div>
             </main>
             
-            {/* Mobile Bottom Nav */}
             <div className="md:hidden">
                 {['wallet', 'swap', 'discover', 'settings'].includes(activeView) && (
                 <BottomNav activeView={activeView} onViewChange={(view) => navigateTo(view)} t={t} />

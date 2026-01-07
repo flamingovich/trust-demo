@@ -103,7 +103,6 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
         <Loader2 className={`text-blue-600 ${isRefreshing || pullDistance > 60 ? 'animate-spin' : ''}`} size={24} />
       </div>
 
-      {/* Header */}
       <div className="px-5 pt-4 flex justify-between items-center shrink-0 mb-2 md:mb-10">
         <button 
           onClick={() => onAction('wallet-manager')}
@@ -133,7 +132,6 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
 
       <div className="flex-1 flex flex-col md:flex-row md:space-x-12 min-h-0">
         <div className="md:w-[400px] shrink-0">
-            {/* Balance Card */}
             <div className="px-3 md:px-0 mb-4 shrink-0">
                 <div className="relative overflow-hidden bg-white dark:bg-dark-surface rounded-[28px] md:rounded-[36px] p-6 md:p-10 border border-zinc-200/50 dark:border-dark-border shadow-[0_10px_40px_rgba(0,0,0,0.02)] dark:shadow-none transition-all">
                 <div className="relative z-10">
@@ -143,13 +141,11 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
                             <Copy size={13} />
                         </button>
                     </div>
-                    
                     <div className="flex items-center justify-between">
                         <h1 className="text-[34px] md:text-[48px] font-extrabold tracking-tighter leading-none text-black dark:text-white">
                             {formatPrice(totalBalance)}
                         </h1>
                     </div>
-
                     <div className={`mt-3 md:mt-6 flex items-center space-x-1.5 font-bold text-[13px] md:text-[16px] ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
                         <Triangle size={10} fill="currentColor" className={`${!isPositive ? 'rotate-180' : ''}`} />
                         <span>{isPositive ? '+' : '-'}{formatPrice(Math.abs(balanceChangeUsd))} (+0,08%)</span>
@@ -159,7 +155,6 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
                 </div>
             </div>
 
-            {/* Actions Grid */}
             <div className="px-6 md:px-0 mb-5 md:mb-10 shrink-0">
                 <div className="grid grid-cols-4 md:grid-cols-2 gap-3 md:gap-5">
                 {[
@@ -183,7 +178,6 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
             </div>
         </div>
 
-        {/* Assets List */}
         <div className="px-3 md:px-0 flex-1 min-h-0 flex flex-col mb-4 md:mb-0">
             <div 
                 className="flex-1 bg-white dark:bg-dark-surface rounded-[28px] md:rounded-[36px] border border-zinc-200/50 dark:border-dark-border shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col overflow-hidden"
@@ -191,65 +185,65 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
             >
-                <div className="flex items-center justify-between px-6 md:px-8 py-4 md:py-6 shrink-0 border-b border-zinc-50/50 dark:border-dark-border/30">
+                <div className="flex items-center justify-between px-6 md:px-8 py-3 md:py-4 shrink-0 border-b border-zinc-50/50 dark:border-dark-border/30">
                     <div className="flex space-x-6 md:space-x-10">
-                        <button className="text-[15px] md:text-[18px] font-extrabold text-zinc-900 dark:text-zinc-100 border-b-2 md:border-b-3 border-blue-600 pb-1">
+                        <button className="text-[14px] md:text-[16px] font-extrabold text-zinc-900 dark:text-zinc-100 border-b-2 md:border-b-3 border-blue-600 pb-1">
                             {t.crypto}
                         </button>
-                        <button className="text-[15px] md:text-[18px] font-bold text-zinc-400 opacity-50 pb-1">NFTs</button>
+                        <button className="text-[14px] md:text-[16px] font-bold text-zinc-400 opacity-50 pb-1">NFTs</button>
                     </div>
                     <div className="flex items-center space-x-2 md:space-x-4">
-                        <button onClick={() => onAction('history')} className="p-1.5 md:p-2 text-zinc-400 hover:text-blue-600 transition-colors bg-zinc-50 dark:bg-dark-bg rounded-xl">
-                            <History size={18} className="md:w-5 md:h-5" />
+                        <button onClick={() => onAction('history')} className="p-1.5 text-zinc-400 hover:text-blue-600 transition-colors bg-zinc-50 dark:bg-dark-bg rounded-xl">
+                            <History size={16} className="md:w-4 md:h-4" />
                         </button>
                         <button 
                             onClick={toggleSort} 
-                            className={`p-1.5 md:p-2 rounded-xl transition-colors ${sortOrder !== 'default' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-zinc-400 bg-zinc-50 dark:bg-dark-bg'}`}
+                            className={`p-1.5 rounded-xl transition-colors ${sortOrder !== 'default' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-zinc-400 bg-zinc-50 dark:bg-dark-bg'}`}
                         >
-                            <SlidersHorizontal size={18} className="md:w-5 md:h-5" />
+                            <SlidersHorizontal size={16} className="md:w-4 md:h-4" />
                         </button>
                     </div>
                 </div>
 
-                <div ref={listRef} className="flex-1 overflow-y-auto no-scrollbar px-3 md:px-6 pb-6 pt-2 space-y-0.5 md:space-y-1">
+                <div ref={listRef} className="flex-1 overflow-y-auto no-scrollbar px-2 md:px-4 pb-6 pt-1 space-y-0.5">
                     {assets.map((asset) => (
                     <div 
                         key={asset.id} 
-                        className="flex items-center justify-between py-2 px-3 md:p-4 bg-transparent dark:bg-transparent rounded-[22px] md:rounded-[28px] hover:bg-zinc-50 dark:hover:bg-dark-elevated/20 active:bg-zinc-100 transition-all cursor-pointer group"
+                        className="flex items-center justify-between py-1.5 px-3 md:p-3 bg-transparent dark:bg-transparent rounded-[18px] md:rounded-[24px] hover:bg-zinc-50 dark:hover:bg-dark-elevated/20 active:bg-zinc-100 transition-all cursor-pointer group"
                         onClick={() => onAction('asset-detail', asset.id)}
                     >
-                        <div className="flex items-center space-x-3.5 md:space-x-5">
+                        <div className="flex items-center space-x-3 md:space-x-4">
                             <div className="relative shrink-0">
-                                <div className="w-[44px] h-[44px] md:w-[54px] md:h-[54px] rounded-full bg-zinc-50 dark:bg-dark-bg flex items-center justify-center p-2 md:p-2.5 border border-zinc-100 dark:border-dark-border/50 shadow-sm group-hover:scale-105 transition-transform">
+                                <div className="w-[38px] h-[38px] md:w-[48px] md:h-[48px] rounded-full bg-zinc-50 dark:bg-dark-bg flex items-center justify-center p-2 md:p-2 border border-zinc-100 dark:border-dark-border/50 shadow-sm group-hover:scale-105 transition-transform">
                                     <img src={asset.logoUrl} alt="" className="w-full h-full object-contain rounded-[22%]" />
                                 </div>
                             </div>
                             <div className="min-w-0">
                                 <div className="flex items-center space-x-2">
-                                    <h3 className="font-bold text-[15px] md:text-[18px] leading-tight text-zinc-900 dark:text-zinc-100">{asset.symbol}</h3>
-                                    <span className="text-[9px] md:text-[10px] font-bold text-blue-500 bg-blue-500/5 px-1.5 py-0.5 rounded-md uppercase tracking-wider">{asset.network}</span>
+                                    <h3 className="font-bold text-[14px] md:text-[16px] leading-tight text-zinc-900 dark:text-zinc-100">{asset.symbol}</h3>
+                                    <span className="text-[8px] md:text-[9px] font-bold text-blue-500 bg-blue-500/5 px-1 py-0.5 rounded-md uppercase tracking-wider">{asset.network}</span>
                                 </div>
-                                <div className="flex items-center space-x-2 mt-0.5 md:mt-1">
-                                    <span className="text-[11px] md:text-[13px] font-bold text-zinc-400 tracking-tight">{formatPrice(asset.priceUsd)}</span>
-                                    <span className={`text-[10px] md:text-[12px] font-extrabold ${asset.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                <div className="flex items-center space-x-2 mt-0.5">
+                                    <span className="text-[10px] md:text-[12px] font-bold text-zinc-400 tracking-tight">{formatPrice(asset.priceUsd)}</span>
+                                    <span className={`text-[9px] md:text-[11px] font-extrabold ${asset.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                                         {asset.change24h >= 0 ? '+' : ''}{asset.change24h.toFixed(2)}%
                                     </span>
                                 </div>
                             </div>
                         </div>
                         <div className="text-right">
-                        <p className="font-extrabold text-[16px] md:text-[19px] leading-tight text-zinc-900 dark:text-zinc-100 tracking-tight">
+                        <p className="font-extrabold text-[15px] md:text-[17px] leading-tight text-zinc-900 dark:text-zinc-100 tracking-tight">
                             {formatToken(asset.balance)}
                         </p>
-                        <p className="text-[12px] md:text-[14px] text-zinc-400 font-bold opacity-60 mt-0.5">
+                        <p className="text-[11px] md:text-[13px] text-zinc-400 font-bold opacity-60 mt-0.5">
                             {formatPrice(asset.balance * asset.priceUsd)}
                         </p>
                         </div>
                     </div>
                     ))}
                     
-                    <button className="w-full py-4 md:py-6 bg-zinc-50/50 dark:bg-dark-surface/50 rounded-[22px] md:rounded-[32px] flex items-center justify-center space-x-2.5 text-zinc-400 font-bold text-[11px] md:text-[13px] hover:bg-zinc-100 transition-colors uppercase tracking-widest mt-2 border border-dashed border-zinc-200 dark:border-dark-border">
-                        <Plus size={14} className="md:w-5 md:h-5" />
+                    <button className="w-full py-3 md:py-4 bg-zinc-50/50 dark:bg-dark-surface/50 rounded-[18px] md:rounded-[24px] flex items-center justify-center space-x-2.5 text-zinc-400 font-bold text-[10px] md:text-[11px] hover:bg-zinc-100 transition-colors uppercase tracking-widest mt-2 border border-dashed border-zinc-200 dark:border-dark-border">
+                        <Plus size={12} className="md:w-4 md:h-4" />
                         <span>{t.manage}</span>
                     </button>
                 </div>
@@ -257,7 +251,6 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
         </div>
       </div>
 
-      {/* Copy Modal */}
       {showCopyMenu && (
         <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center animate-fade-in p-0 m-0">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" onClick={() => setShowCopyMenu(false)}></div>
@@ -275,30 +268,12 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
                 { label: 'EVM', type: 'evm' as const, logo: 'https://cryptologos.cc/logos/ethereum-eth-logo.png', network: 'Multi-chain' },
                 { label: 'TRON', type: 'tron' as const, logo: 'https://cryptologos.cc/logos/tron-trx-logo.png', network: 'TRC-20' },
               ].map((item) => (
-                <button 
-                  key={item.type}
-                  onClick={() => handleCopy(item.type)}
-                  className="w-full flex items-center justify-between p-5 rounded-[26px] bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 btn-press"
-                >
+                <button key={item.type} onClick={() => handleCopy(item.type)} className="w-full flex items-center justify-between p-5 rounded-[26px] bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 btn-press">
                   <div className="flex items-center space-x-5">
-                    <div className="w-11 h-11 rounded-2xl bg-white dark:bg-dark-surface p-2 shadow-sm">
-                      <img src={item.logo} className="w-full h-full object-contain" alt="" />
-                    </div>
-                    <div className="text-left">
-                      <span className="font-extrabold text-[15px] block leading-none mb-1">{item.label}</span>
-                      <span className="text-[11px] text-zinc-400 font-bold uppercase tracking-wider">{item.network}</span>
-                    </div>
+                    <div className="w-11 h-11 rounded-2xl bg-white dark:bg-dark-surface p-2 shadow-sm"><img src={item.logo} className="w-full h-full object-contain" alt="" /></div>
+                    <div className="text-left"><span className="font-extrabold text-[15px] block leading-none mb-1">{item.label}</span><span className="text-[11px] text-zinc-400 font-bold uppercase tracking-wider">{item.network}</span></div>
                   </div>
-                  {copiedNetwork === item.type ? (
-                    <div className="flex items-center space-x-1.5 text-green-500 font-bold text-[12px] uppercase animate-pop-in">
-                        <Check size={18} strokeWidth={3} />
-                        <span>Copied</span>
-                    </div>
-                  ) : (
-                    <div className="p-2.5 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-zinc-300">
-                      <Copy size={18} />
-                    </div>
-                  )}
+                  {copiedNetwork === item.type ? (<div className="flex items-center space-x-1.5 text-green-500 font-bold text-[12px] uppercase animate-pop-in"><Check size={18} strokeWidth={3} /><span>Copied</span></div>) : (<div className="p-2.5 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-zinc-300"><Copy size={18} /></div>)}
                 </button>
               ))}
             </div>
