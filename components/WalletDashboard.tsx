@@ -220,8 +220,8 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
                     >
                         <div className="flex items-center space-x-3.5 md:space-x-5">
                             <div className="relative shrink-0">
-                                <div className="w-[44px] h-[44px] md:w-[54px] md:h-[54px] rounded-[14px] md:rounded-[18px] bg-zinc-50 dark:bg-dark-bg flex items-center justify-center p-2 md:p-2.5 border border-zinc-100 dark:border-dark-border/50 shadow-sm group-hover:scale-105 transition-transform">
-                                    <img src={asset.logoUrl} alt="" className="w-full h-full object-contain" />
+                                <div className="w-[44px] h-[44px] md:w-[54px] md:h-[54px] rounded-full bg-zinc-50 dark:bg-dark-bg flex items-center justify-center p-2 md:p-2.5 border border-zinc-100 dark:border-dark-border/50 shadow-sm group-hover:scale-105 transition-transform">
+                                    <img src={asset.logoUrl} alt="" className="w-full h-full object-contain rounded-[22%]" />
                                 </div>
                             </div>
                             <div className="min-w-0">
