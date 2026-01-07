@@ -96,9 +96,16 @@ const App: React.FC = () => {
       const currentAssets = activeWallet.assets;
       if (!currentAssets || currentAssets.length === 0) return;
       const cgIds = currentAssets.map(a => CG_ID_MAP[a.id] || a.id).join(',');
+      // Added sparkline=true to fetch history for mini-charts
       const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cgIds}&vs_currencies=usd&include_24hr_change=true`);
+      
+      // Secondary fetch for sparklines if needed, but for simplicity we can also simulate or use a second call to markets API
+      const sparklineRes = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${cgIds}&sparkline=true&price_change_percentage=24h`);
+      
       if (!response.ok) return;
       const data = await response.json();
+      const sparkData = sparklineRes.ok ? await sparklineRes.json() : [];
+
       lastPriceFetchRef.current = Date.now();
       setWallets(prev => prev.map(wallet => {
         if (wallet.id !== activeWalletId) return wallet;
@@ -106,11 +113,14 @@ const App: React.FC = () => {
           ...wallet,
           assets: wallet.assets.map(asset => {
             const cgId = CG_ID_MAP[asset.id] || asset.id;
+            const marketInfo = Array.isArray(sparkData) ? sparkData.find(s => s.id === cgId) : null;
+            
             if (data[cgId]) {
               return {
                 ...asset,
                 priceUsd: data[cgId].usd,
-                change24h: data[cgId].usd_24h_change || asset.change24h
+                change24h: data[cgId].usd_24h_change || asset.change24h,
+                sparklineData: marketInfo?.sparkline_in_7d?.price || asset.sparklineData
               };
             }
             return asset;
@@ -141,8 +151,13 @@ const App: React.FC = () => {
     localStorage.setItem('demo_wallet_theme', theme);
     localStorage.setItem('demo_wallet_currency', currency);
     const root = window.document.documentElement;
-    if (theme === 'dark') root.classList.add('dark');
-    else root.classList.remove('dark');
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.add('light');
+      root.classList.remove('dark');
+    }
   }, [wallets, activeWalletId, language, theme, currency]);
 
   const formatPrice = useCallback((usdAmount: number) => {
@@ -171,7 +186,6 @@ const App: React.FC = () => {
     };
 
     setWallets(prev => prev.map(w => {
-      // Logic for the SENDER wallet (active)
       if (w.id === activeWalletId) {
         const updatedAssets = w.assets.map(a => {
           if (a.id === tx.assetId) {
@@ -186,7 +200,6 @@ const App: React.FC = () => {
         return { ...w, assets: updatedAssets, transactions: [fullTx, ...(w.transactions || [])] };
       }
       
-      // Logic for the RECEIVER wallet (internal transfer)
       if (toWalletId && w.id === toWalletId && tx.type === 'send') {
         const updatedAssets = w.assets.map(a => {
           if (a.id === tx.assetId) {
@@ -197,7 +210,7 @@ const App: React.FC = () => {
         const receivedTx: Transaction = {
           ...fullTx,
           type: 'receive',
-          address: activeWallet.name // Show sender wallet name as origin
+          address: activeWallet.name 
         };
         return { ...w, assets: updatedAssets, transactions: [receivedTx, ...(w.transactions || [])] };
       }
@@ -320,7 +333,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className={`flex flex-col md:flex-row h-screen w-full transition-colors duration-500 ${theme === 'dark' ? 'bg-[#0a0a0b]' : 'bg-white'}`}>
+    <div className={`flex flex-col md:flex-row h-screen w-full transition-colors duration-500 relative z-10 ${theme === 'dark' ? 'bg-transparent' : 'bg-transparent'}`}>
       {isLocked && (
         <LockScreen onUnlock={() => setIsLocked(false)} theme={theme} language={language} />
       )}
