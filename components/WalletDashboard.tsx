@@ -220,22 +220,22 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
                             </div>
                             <div className="min-w-0">
                                 <div className="flex items-center space-x-2">
-                                    <h3 className="font-bold text-[14px] md:text-[16px] leading-tight text-zinc-900 dark:text-zinc-100">{asset.symbol}</h3>
-                                    <span className="text-[8px] md:text-[9px] font-bold text-blue-500 bg-blue-500/5 px-1 py-0.5 rounded-md uppercase tracking-wider">{asset.network}</span>
+                                    <h3 className="font-bold text-[16px] md:text-[18px] leading-tight text-zinc-900 dark:text-zinc-100">{asset.symbol}</h3>
+                                    <span className="text-[10px] md:text-[11px] font-bold text-blue-500 bg-blue-500/5 px-1.5 py-0.5 rounded-md uppercase tracking-wider">{asset.network}</span>
                                 </div>
                                 <div className="flex items-center space-x-2 mt-0.5">
-                                    <span className="text-[10px] md:text-[12px] font-bold text-zinc-400 tracking-tight">{formatPrice(asset.priceUsd)}</span>
-                                    <span className={`text-[9px] md:text-[11px] font-extrabold ${asset.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                    <span className="text-[12px] md:text-[14px] font-bold text-zinc-400 tracking-tight">{formatPrice(asset.priceUsd)}</span>
+                                    <span className={`text-[11px] md:text-[13px] font-extrabold ${asset.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                                         {asset.change24h >= 0 ? '+' : ''}{asset.change24h.toFixed(2)}%
                                     </span>
                                 </div>
                             </div>
                         </div>
                         <div className="text-right">
-                        <p className="font-extrabold text-[15px] md:text-[17px] leading-tight text-zinc-900 dark:text-zinc-100 tracking-tight">
+                        <p className="font-extrabold text-[17px] md:text-[19px] leading-tight text-zinc-900 dark:text-zinc-100 tracking-tight">
                             {formatToken(asset.balance)}
                         </p>
-                        <p className="text-[11px] md:text-[13px] text-zinc-400 font-bold opacity-60 mt-0.5">
+                        <p className="text-[13px] md:text-[15px] text-zinc-400 font-bold opacity-60 mt-0.5">
                             {formatPrice(asset.balance * asset.priceUsd)}
                         </p>
                         </div>
