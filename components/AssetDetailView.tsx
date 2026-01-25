@@ -16,7 +16,7 @@ interface Props {
 }
 
 const formatVal = (val: number) => {
-  return val.toLocaleString('ru-RU', { maximumFractionDigits: 4 });
+  return val.toLocaleString('ru-RU', { maximumFractionDigits: 6 });
 };
 
 const AssetDetailView: React.FC<Props> = ({ asset, transactions = [], onBack, onAction, formatPrice, t, language, allAssets = [] }) => {
@@ -34,52 +34,52 @@ const AssetDetailView: React.FC<Props> = ({ asset, transactions = [], onBack, on
   const getSymbol = (id: string) => allAssets.find(a => a.id === id)?.symbol || '';
 
   return (
-    <div className="h-full bg-white dark:bg-dark-bg text-[#1A1C1E] dark:text-zinc-100 flex flex-col animate-ios-slide-in relative transition-colors duration-300 md:items-center">
+    <div className="h-full bg-white dark:bg-black text-black dark:text-white flex flex-col animate-ios-slide-in relative transition-colors duration-300">
       {/* Header */}
-      <div className="w-full max-w-2xl px-5 pt-6 pb-4 flex items-center justify-between shrink-0">
-        <button onClick={onBack} className="p-2.5 bg-zinc-100 dark:bg-dark-surface rounded-full flex items-center justify-center btn-press">
-          <ChevronLeft size={22} strokeWidth={2.5} />
+      <div className="px-5 pt-safe pb-4 flex items-center justify-between shrink-0 mt-2">
+        <button onClick={onBack} className="p-2.5 bg-zinc-50 dark:bg-dark-surface rounded-full flex items-center justify-center btn-press">
+          <ChevronLeft size={24} strokeWidth={2.5} />
         </button>
-        <h2 className="text-[17px] font-bold">{asset?.name}</h2>
-        <button className="p-2.5 bg-zinc-100 dark:bg-dark-surface rounded-full">
-          <Info size={20} />
+        <h2 className="text-[18px] font-bold">{asset?.name}</h2>
+        <button className="p-2.5 bg-zinc-50 dark:bg-dark-surface rounded-full">
+          <Info size={22} />
         </button>
       </div>
 
-      <div className="flex-1 w-full max-w-2xl overflow-y-auto no-scrollbar">
-        <div className="flex flex-col items-center py-8 px-6">
-          <div className="w-20 h-20 rounded-[28px] bg-white dark:bg-dark-surface flex items-center justify-center shadow-lg border border-zinc-100 dark:border-white/5 mb-6">
-            <img src={asset?.logoUrl} alt="" className="w-12 h-12 object-contain" />
+      <div className="flex-1 overflow-y-auto no-scrollbar">
+        <div className="flex flex-col items-center py-10 px-6">
+          <div className="w-[72px] h-[72px] rounded-full flex items-center justify-center bg-zinc-50 dark:bg-dark-surface p-0 mb-6">
+            <img src={asset?.logoUrl} alt="" className="w-full h-full object-contain rounded-full" />
           </div>
-          <h1 className="text-[34px] font-bold tracking-tight mb-2 text-center text-[#1A1C1E] dark:text-white leading-none">
+          <h1 className="text-[36px] font-extrabold tracking-tight mb-2 text-center leading-none">
             {formatVal(asset.balance)} {asset?.symbol}
           </h1>
-          <p className="text-zinc-400 font-bold text-lg mt-1">≈ {formatPrice(asset.balance * price)}</p>
-          <div className={`mt-4 px-3 py-1 rounded-full text-[11px] font-extrabold ${priceChange >= 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+          <p className="text-[#8E8E93] dark:text-zinc-500 font-bold text-lg">≈ {formatPrice(asset.balance * price)}</p>
+          <div className={`mt-4 px-3.5 py-1 rounded-full text-[13px] font-extrabold ${priceChange >= 0 ? 'bg-[#34C759]/10 text-[#34C759]' : 'bg-[#FF3B30]/10 text-[#FF3B30]'}`}>
             {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)}%
           </div>
         </div>
 
-        <div className="flex justify-center space-x-6 px-6 mb-10">
+        <div className="flex justify-center space-x-8 px-6 mb-12">
           {[
-            { id: 'send', label: t.send, icon: <ArrowUpRight size={26} />, bg: 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' },
-            { id: 'receive', label: t.receive, icon: <Plus size={26} />, bg: 'bg-zinc-100 dark:bg-dark-surface text-zinc-900 dark:text-zinc-200' },
-            { id: 'swap', label: t.swap, icon: <Repeat size={26} />, bg: 'bg-zinc-100 dark:bg-dark-surface text-zinc-900 dark:text-zinc-200' }
+            { id: 'send', label: t.send, icon: <ArrowUpRight size={28} />, bg: 'bg-[#0500FF] text-white' },
+            { id: 'receive', label: t.receive, icon: <Plus size={28} />, bg: 'bg-zinc-50 dark:bg-dark-surface text-black dark:text-white' },
+            { id: 'swap', label: t.swap, icon: <Repeat size={28} />, bg: 'bg-zinc-50 dark:bg-dark-surface text-black dark:text-white' }
           ].map((action) => (
             <div key={action.id} className="flex flex-col items-center space-y-2">
-              <button onClick={() => onAction(action.id as View)} className={`w-[60px] h-[60px] ${action.bg} rounded-[22px] flex items-center justify-center btn-press shadow-sm`}>
+              <button onClick={() => onAction(action.id as View)} className={`w-[64px] h-[64px] ${action.bg} rounded-full flex items-center justify-center btn-press shadow-sm`}>
                 {action.icon}
               </button>
-              <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-tighter">{action.label}</span>
+              <span className="text-[13px] font-bold text-[#8E8E93] dark:text-zinc-500 lowercase tracking-tight">{action.label}</span>
             </div>
           ))}
         </div>
 
         <div className="px-5 pb-20">
-          <h3 className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest mb-4 px-1">
+          <h3 className="text-[#8E8E93] dark:text-zinc-500 text-[12px] font-bold uppercase tracking-widest mb-4">
             {t.history}
           </h3>
-          <div className="space-y-2">
+          <div className="space-y-1">
             {transactions.length > 0 ? (
               transactions.map(tx => (
                 <TransactionItem 
@@ -92,7 +92,7 @@ const AssetDetailView: React.FC<Props> = ({ asset, transactions = [], onBack, on
                 />
               ))
             ) : (
-              <div className="py-10 text-center opacity-30">
+              <div className="py-12 text-center opacity-40">
                 <p className="font-bold text-sm">Нет транзакций</p>
               </div>
             )}
@@ -100,67 +100,49 @@ const AssetDetailView: React.FC<Props> = ({ asset, transactions = [], onBack, on
         </div>
       </div>
 
+      {/* Transaction Details Modal */}
       {selectedTx && (
-        <div className="fixed inset-0 z-[150] flex items-end md:items-center justify-center animate-fade-in p-0 md:p-6">
-          <div className="absolute inset-0 bg-black/75 backdrop-blur-[2px]" onClick={() => setSelectedTx(null)}></div>
-          <div className="w-full max-w-[440px] bg-white dark:bg-zinc-950 rounded-t-[40px] md:rounded-[40px] p-8 pb-10 relative animate-ios-bottom-up shadow-2xl border-t border-white/5">
-            <div className="w-12 h-1 bg-zinc-200 dark:bg-zinc-800 rounded-full mx-auto mb-8 md:hidden"></div>
-            <button onClick={() => setSelectedTx(null)} className="absolute right-6 top-8 text-zinc-400"><X size={20}/></button>
+        <div className="fixed inset-0 z-[150] flex items-end justify-center animate-fade-in">
+          <div className="absolute inset-0 bg-black/75" onClick={() => setSelectedTx(null)}></div>
+          <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-t-[32px] p-8 pb-12 relative animate-ios-bottom-up shadow-2xl">
+            <div className="w-12 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full mx-auto mb-8"></div>
+            <button onClick={() => setSelectedTx(null)} className="absolute right-6 top-8 text-zinc-400"><X size={24}/></button>
             <div className="text-center pt-4 mb-8">
-               <div className={`w-20 h-20 rounded-[28px] mx-auto mb-6 flex items-center justify-center shadow-lg ${
+               <div className={`w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center shadow-lg ${
                  selectedTx.type === 'swap' ? 'bg-blue-600/10 text-blue-600' : 
-                 selectedTx.type === 'send' ? 'bg-zinc-100 dark:bg-zinc-900 text-zinc-500' : 
-                 'bg-green-500/10 text-green-500'
+                 selectedTx.type === 'send' ? 'bg-zinc-50 dark:bg-zinc-800 text-zinc-500' : 
+                 'bg-green-500/10 text-[#34C759]'
                }`}>
                   {selectedTx.type === 'swap' ? <Repeat size={36}/> : selectedTx.type === 'send' ? <ArrowUpRight size={36}/> : <ArrowDownLeft size={36}/>}
                </div>
-               <h3 className="text-2xl font-bold text-[#1A1C1E] dark:text-white leading-tight">
+               <h3 className="text-2xl font-bold tracking-tight">
                 {selectedTx.type === 'swap' ? (
                    <span>{formatVal(selectedTx.amount)} {getSymbol(selectedTx.assetId)} → {formatVal(selectedTx.toAmount || 0)} {getSymbol(selectedTx.toAssetId!)}</span>
                 ) : (
                   <>{selectedTx.type === 'receive' ? '+' : '-'}{formatVal(selectedTx.amount)} {asset.symbol}</>
                 )}
                </h3>
-               <div className="flex items-center justify-center space-x-2 mt-4 text-green-500 font-bold uppercase tracking-widest text-[11px]">
+               <div className="flex items-center justify-center space-x-2 mt-4 text-[#34C759] font-bold uppercase tracking-widest text-[12px]">
                   <Check size={14} strokeWidth={4}/> <span>{t.done}</span>
                </div>
             </div>
             
-            <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-[32px] p-6 border border-zinc-100 dark:border-white/5 space-y-4">
+            <div className="bg-zinc-50 dark:bg-dark-surface rounded-[24px] p-6 space-y-5">
                <div className="flex justify-between items-center text-sm font-bold">
-                  <span className="text-zinc-400 uppercase text-[10px] tracking-widest">{t.date}</span>
-                  <span className="text-[#1A1C1E] dark:text-white">{new Date(selectedTx.timestamp).toLocaleString()}</span>
+                  <span className="text-[#8E8E93] uppercase text-[11px] tracking-widest">{t.date}</span>
+                  <span>{new Date(selectedTx.timestamp).toLocaleString()}</span>
                </div>
-               
-               {selectedTx.type === 'swap' ? (
-                 <div className="flex justify-between items-center pt-4 border-t border-zinc-200/20 text-sm font-bold">
-                   <span className="text-zinc-400 uppercase text-[10px] tracking-widest">{language === 'ru' ? 'Курс обмена' : 'Rate'}</span>
-                   <span className="text-[#1A1C1E] dark:text-white">1 {getSymbol(selectedTx.assetId)} ≈ {((selectedTx.toAmount || 0) / selectedTx.amount).toFixed(4)} {getSymbol(selectedTx.toAssetId!)}</span>
-                 </div>
-               ) : (
-                 <>
-                   <div className="flex justify-between items-start pt-4 border-t border-zinc-200/20 text-sm font-bold">
-                     <span className="text-zinc-400 uppercase text-[10px] tracking-widest mt-1">{language === 'ru' ? 'Кому' : 'To'}</span>
-                     <div className="text-right pl-8">
-                       <p className="text-[#1A1C1E] dark:text-white">{selectedTx.type === 'receive' ? t.mainWallet : (selectedTx.address?.slice(0, 10) + '...')}</p>
-                       <p className="font-mono text-[9px] text-zinc-400">{selectedTx.address}</p>
-                     </div>
-                   </div>
-                 </>
-               )}
-
-               <div className="flex justify-between items-start pt-4 border-t border-zinc-200/20 text-sm font-bold">
-                 <span className="text-zinc-400 uppercase text-[10px] tracking-widest mt-1">{t.txHash}</span>
-                 <span className="text-[#3262F1] font-mono text-[9px] break-all text-right pl-12">{selectedTx.hash || '0x' + Math.random().toString(16).slice(2, 22)}</span>
+               <div className="flex justify-between items-start pt-5 border-t border-zinc-100 dark:border-dark-border text-sm font-bold">
+                 <span className="text-[#8E8E93] uppercase text-[11px] tracking-widest mt-1">{t.txHash}</span>
+                 <span className="text-[#0500FF] font-mono text-[11px] break-all text-right pl-12">{selectedTx.hash || '0x' + Math.random().toString(16).slice(2, 22)}</span>
                </div>
-
-               <div className="flex justify-between items-center pt-4 border-t border-zinc-200/20 text-sm font-bold">
-                  <span className="text-zinc-400 uppercase text-[10px] tracking-widest">{t.networkFee}</span>
-                  <span className="text-[#1A1C1E] dark:text-white">{selectedTx.networkFee || formatPrice(0.85)}</span>
+               <div className="flex justify-between items-center pt-5 border-t border-zinc-100 dark:border-dark-border text-sm font-bold">
+                  <span className="text-[#8E8E93] uppercase text-[11px] tracking-widest">{t.networkFee}</span>
+                  <span>{selectedTx.networkFee || formatPrice(0.85)}</span>
                </div>
             </div>
             
-            <button className="w-full py-5 bg-blue-600 text-white rounded-[24px] mt-6 font-bold uppercase tracking-widest text-sm shadow-lg shadow-blue-600/20 active:scale-95 transition-transform">Explorer</button>
+            <button className="w-full py-4.5 bg-[#0500FF] text-white rounded-2xl mt-8 font-bold uppercase tracking-widest text-[15px] btn-press shadow-xl shadow-blue-600/20 transition-all">Explorer</button>
           </div>
         </div>
       )}

@@ -79,201 +79,190 @@ const WalletDashboard: React.FC<Props> = ({ assets, totalBalance, walletName, so
           setShowCopyMenu(false);
         }, 1200);
       });
-    } else {
-      const textArea = document.createElement("textarea");
-      textArea.value = addr;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textArea);
-      setCopiedNetwork(type);
-      setTimeout(() => {
-        setCopiedNetwork(null);
-        setShowCopyMenu(false);
-      }, 1200);
     }
   };
 
   return (
     <div 
-      className="flex flex-col h-full bg-[#fcfcfd] dark:bg-dark-bg text-black dark:text-zinc-100 transition-colors duration-300 relative animate-fade-in md:px-12 md:py-8"
+      className="flex flex-col h-full bg-[#FFFFFF] dark:bg-black text-black dark:text-white transition-colors duration-300 relative animate-fade-in overflow-hidden"
       style={{ transform: `translateY(${pullDistance}px)`, transition: pullDistance === 0 ? 'transform 0.3s ease-out' : 'none' }}
     >
-      <div className="absolute left-0 right-0 flex justify-center pointer-events-none" style={{ top: -40, opacity: Math.min(pullDistance / 40, 1) }}>
-        <Loader2 className={`text-blue-600 ${isRefreshing || pullDistance > 60 ? 'animate-spin' : ''}`} size={24} />
+      {/* Pull to refresh indicator */}
+      <div className="absolute left-0 right-0 flex justify-center pointer-events-none" style={{ top: 20, opacity: Math.min(pullDistance / 40, 1) }}>
+        <Loader2 className={`text-zinc-400 ${isRefreshing || pullDistance > 60 ? 'animate-spin' : ''}`} size={24} />
       </div>
 
-      <div className="px-5 pt-4 flex justify-between items-center shrink-0 mb-2 md:mb-10">
+      {/* Header matching Screenshot 1 */}
+      <header className="px-5 pt-safe pb-2 flex justify-between items-center shrink-0 mt-4">
         <button 
           onClick={() => onAction('wallet-manager')}
-          className="flex items-center space-x-2 bg-zinc-100/80 dark:bg-dark-surface p-1 pr-3.5 rounded-full border border-zinc-200/50 dark:border-dark-border btn-press"
+          className="flex items-center space-x-2 bg-zinc-50 dark:bg-dark-surface p-1.5 pr-3 rounded-full border border-zinc-100 dark:border-dark-border btn-press"
         >
-          <div className="w-7 h-7 rounded-full bg-zinc-300 dark:bg-dark-elevated flex items-center justify-center overflow-hidden border border-white/20">
-             <img src="https://api.dicebear.com/7.x/shapes/svg?seed=Lucky" alt="avatar" className="w-full h-full object-cover" />
+          <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-dark-elevated flex items-center justify-center overflow-hidden">
+             <img src="https://api.dicebear.com/7.x/shapes/svg?seed=Main" alt="avatar" className="w-full h-full object-cover" />
           </div>
           <div className="flex items-center space-x-1">
-            <span className="text-[14px] md:text-[16px] font-bold tracking-tight">{walletName}</span>
-            <ChevronDown size={13} className="text-zinc-400" />
+            <span className="text-[15px] font-bold tracking-tight">{walletName}</span>
+            <ChevronDown size={14} className="text-zinc-400" />
           </div>
+        {/* Fixed: Close button tag and remove premature </header> closure */}
         </button>
         
-        <div className="flex items-center space-x-1.5 md:hidden">
-          <button className="p-2 text-zinc-500 dark:text-zinc-400 bg-white dark:bg-dark-surface rounded-full shadow-sm border border-zinc-100 dark:border-dark-border btn-press">
-            <ScanLine size={18} />
+        <div className="flex items-center space-x-3">
+          <button className="p-2 text-zinc-800 dark:text-zinc-200 bg-zinc-50 dark:bg-dark-surface rounded-full border border-zinc-100 dark:border-dark-border btn-press">
+            <ScanLine size={20} />
           </button>
           <button 
             onClick={() => onAction('settings')}
-            className="p-2 text-zinc-500 dark:text-zinc-400 bg-white dark:bg-dark-surface rounded-full shadow-sm border border-zinc-100 dark:border-dark-border btn-press"
+            className="p-2 text-zinc-800 dark:text-zinc-200 bg-zinc-50 dark:bg-dark-surface rounded-full border border-zinc-100 dark:border-dark-border btn-press"
           >
-            <Settings size={18} />
+            <Settings size={20} />
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="flex-1 flex flex-col md:flex-row md:space-x-12 min-h-0">
-        <div className="md:w-[400px] shrink-0">
-            <div className="px-3 md:px-0 mb-4 shrink-0">
-                <div className="relative overflow-hidden bg-white dark:bg-dark-surface rounded-[28px] md:rounded-[36px] p-6 md:p-10 border border-zinc-200/50 dark:border-dark-border shadow-[0_10px_40px_rgba(0,0,0,0.02)] dark:shadow-none transition-all">
-                <div className="relative z-10">
-                    <div className="flex items-center space-x-1.5 mb-2">
-                        <p className="text-zinc-400 font-bold text-[10px] md:text-[12px] uppercase tracking-[0.2em]">{t.totalBalance}</p>
-                        <button onClick={() => setShowCopyMenu(true)} className="p-1 text-zinc-300 hover:text-blue-600 transition-colors">
-                            <Copy size={13} />
-                        </button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <h1 className="text-[34px] md:text-[48px] font-extrabold tracking-tighter leading-none text-black dark:text-white">
-                            {formatPrice(totalBalance)}
-                        </h1>
-                    </div>
-                    <div className={`mt-3 md:mt-6 flex items-center space-x-1.5 font-bold text-[13px] md:text-[16px] ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                        <Triangle size={10} fill="currentColor" className={`${!isPositive ? 'rotate-180' : ''}`} />
-                        <span>{isPositive ? '+' : '-'}{formatPrice(Math.abs(balanceChangeUsd))} (+0,08%)</span>
-                    </div>
-                </div>
-                <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 rounded-full blur-[40px] pointer-events-none"></div>
-                </div>
-            </div>
+      {/* Balance Section matching Screenshot 1 */}
+      <section className="px-5 mt-6 mb-8 text-center">
+        <div className="flex flex-col items-center">
+          <div className="flex items-center space-x-1.5 mb-1">
+            <p className="text-[#8E8E93] dark:text-zinc-500 font-bold text-[12px] uppercase tracking-widest">{t.totalBalance}</p>
+            <button onClick={() => setShowCopyMenu(true)} className="p-1 text-zinc-300">
+              <Copy size={14} />
+            </button>
+          </div>
+          <h1 className="text-[40px] font-extrabold tracking-tight leading-tight text-black dark:text-white">
+            {formatPrice(totalBalance)}
+          </h1>
+          <div className={`mt-1 flex items-center space-x-1.5 font-bold text-[15px] ${isPositive ? 'text-[#34C759]' : 'text-[#FF3B30]'}`}>
+            <Triangle size={10} fill="currentColor" className={`${!isPositive ? 'rotate-180' : ''}`} />
+            <span>{formatPrice(Math.abs(balanceChangeUsd))} (+0,08%)</span>
+          </div>
+        </div>
+      </section>
 
-            <div className="px-6 md:px-0 mb-5 md:mb-10 shrink-0">
-                <div className="grid grid-cols-4 md:grid-cols-2 gap-3 md:gap-5">
-                {[
-                    { icon: ArrowUpRight, label: t.send, view: 'send' as View, bg: 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' },
-                    { icon: Plus, label: t.topup, view: 'receive' as View, bg: 'bg-zinc-100 dark:bg-dark-surface text-zinc-700 dark:text-zinc-200 border border-zinc-200/30 dark:border-dark-border' },
-                    { icon: Repeat, label: t.swap, view: 'swap' as View, bg: 'bg-zinc-100 dark:bg-dark-surface text-zinc-700 dark:text-zinc-200 border border-zinc-200/30 dark:border-dark-border' },
-                    { icon: Landmark, label: t.sell, view: null, bg: 'bg-zinc-100 dark:bg-dark-surface text-zinc-700 dark:text-zinc-200 border border-zinc-200/30 dark:border-dark-border' }
-                ].map((action, i) => (
-                    <div key={i} className="flex flex-col items-center space-y-1.5">
-                        <button 
-                            onClick={() => action.view && onAction(action.view)}
-                            className={`w-[52px] h-[52px] md:w-full md:h-[70px] ${action.bg} rounded-[20px] md:rounded-[24px] flex items-center justify-center btn-press shadow-sm transition-transform active:scale-90 md:space-x-4`}
-                        >
-                            <action.icon size={22} className="md:w-6 md:h-6" strokeWidth={2.5} />
-                            <span className="hidden md:block font-bold text-[16px]">{action.label}</span>
-                        </button>
-                        <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 lowercase tracking-tight md:hidden">{action.label}</span>
-                    </div>
-                ))}
-                </div>
+      {/* Action Buttons matching Screenshot 1 */}
+      <section className="px-5 mb-8">
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { icon: ArrowUpRight, label: t.send, view: 'send' as View, bg: 'bg-[#0500FF] text-white' },
+            { icon: Plus, label: t.topup, view: 'receive' as View, bg: 'bg-zinc-50 dark:bg-dark-surface text-black dark:text-white border border-zinc-100 dark:border-dark-border' },
+            { icon: Repeat, label: t.swap, view: 'swap' as View, bg: 'bg-zinc-50 dark:bg-dark-surface text-black dark:text-white border border-zinc-100 dark:border-dark-border' },
+            { icon: Landmark, label: t.sell, view: null, bg: 'bg-zinc-50 dark:bg-dark-surface text-black dark:text-white border border-zinc-100 dark:border-dark-border' }
+          ].map((action, i) => (
+            <div key={i} className="flex flex-col items-center">
+              <button 
+                onClick={() => action.view && onAction(action.view)}
+                className={`w-[54px] h-[54px] ${action.bg} rounded-full flex items-center justify-center btn-press shadow-sm mb-2 transition-transform active:scale-90`}
+              >
+                <action.icon size={24} strokeWidth={2.5} />
+              </button>
+              <span className="text-[12px] font-bold text-[#8E8E93] dark:text-zinc-500 lowercase">{action.label}</span>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Assets Tab Section matching Screenshot 1 */}
+      <section className="flex-1 flex flex-col min-h-0">
+        <div className="flex items-center justify-between px-5 mb-2 shrink-0">
+          <div className="flex space-x-6">
+            <button className="text-[17px] font-extrabold text-black dark:text-white border-b-2 border-black dark:border-white pb-2">
+              {t.crypto}
+            </button>
+            <button className="text-[17px] font-bold text-[#8E8E93] dark:text-zinc-500 pb-2">NFTs</button>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button onClick={() => onAction('history')} className="text-zinc-400">
+              <History size={20} />
+            </button>
+            <button onClick={toggleSort} className="text-zinc-400">
+              <SlidersHorizontal size={20} />
+            </button>
+          </div>
         </div>
 
-        <div className="px-3 md:px-0 flex-1 min-h-0 flex flex-col mb-4 md:mb-0">
-            <div 
-                className="flex-1 bg-white dark:bg-dark-surface rounded-[28px] md:rounded-[36px] border border-zinc-200/50 dark:border-dark-border shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col overflow-hidden"
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-            >
-                <div className="flex items-center justify-between px-6 md:px-8 py-3 md:py-4 shrink-0 border-b border-zinc-50/50 dark:border-dark-border/30">
-                    <div className="flex space-x-6 md:space-x-10">
-                        <button className="text-[14px] md:text-[16px] font-extrabold text-zinc-900 dark:text-zinc-100 border-b-2 md:border-b-3 border-blue-600 pb-1">
-                            {t.crypto}
-                        </button>
-                        <button className="text-[14px] md:text-[16px] font-bold text-zinc-400 opacity-50 pb-1">NFTs</button>
+        {/* Assets List */}
+        <div 
+          ref={listRef}
+          onScroll={(e) => {
+            const target = e.target as HTMLDivElement;
+            if (target.scrollTop > 0) isPulling.current = false;
+          }}
+          className="flex-1 overflow-y-auto no-scrollbar pt-2"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="px-2 space-y-1">
+            {assets.map((asset) => (
+              <div 
+                key={asset.id} 
+                className="flex items-center justify-between py-3.5 px-4 bg-transparent active:bg-zinc-100 dark:active:bg-dark-elevated transition-colors cursor-pointer rounded-2xl"
+                onClick={() => onAction('asset-detail', asset.id)}
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="w-[44px] h-[44px] rounded-full flex items-center justify-center bg-zinc-50 dark:bg-dark-surface p-0">
+                    <img src={asset.logoUrl} alt="" className="w-full h-full object-contain rounded-full" />
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-1.5">
+                      <h3 className="font-bold text-[16px] text-black dark:text-white uppercase">{asset.symbol}</h3>
+                      <span className="text-[10px] font-bold text-[#0500FF] bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded uppercase tracking-wider">{asset.network}</span>
                     </div>
-                    <div className="flex items-center space-x-2 md:space-x-4">
-                        <button onClick={() => onAction('history')} className="p-1.5 text-zinc-400 hover:text-blue-600 transition-colors bg-zinc-50 dark:bg-dark-bg rounded-xl">
-                            <History size={16} className="md:w-4 md:h-4" />
-                        </button>
-                        <button 
-                            onClick={toggleSort} 
-                            className={`p-1.5 rounded-xl transition-colors ${sortOrder !== 'default' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-zinc-400 bg-zinc-50 dark:bg-dark-bg'}`}
-                        >
-                            <SlidersHorizontal size={16} className="md:w-4 md:h-4" />
-                        </button>
+                    <div className="flex items-center space-x-2 mt-0.5">
+                      <span className="text-[13px] font-bold text-[#8E8E93] dark:text-zinc-500 tracking-tight">{formatPrice(asset.priceUsd)}</span>
+                      <span className={`text-[13px] font-bold ${asset.change24h >= 0 ? 'text-[#34C759]' : 'text-[#FF3B30]'}`}>
+                        {asset.change24h >= 0 ? '+' : ''}{asset.change24h.toFixed(2)}%
+                      </span>
                     </div>
+                  </div>
                 </div>
-
-                <div ref={listRef} className="flex-1 overflow-y-auto no-scrollbar px-2 md:px-4 pb-6 pt-1 space-y-0.5">
-                    {assets.map((asset) => (
-                    <div 
-                        key={asset.id} 
-                        className="flex items-center justify-between py-1.5 px-3 md:p-3 bg-transparent dark:bg-transparent rounded-[18px] md:rounded-[24px] hover:bg-zinc-50 dark:hover:bg-dark-elevated/20 active:bg-zinc-100 transition-all cursor-pointer group"
-                        onClick={() => onAction('asset-detail', asset.id)}
-                    >
-                        <div className="flex items-center space-x-3 md:space-x-4">
-                            <div className="relative shrink-0">
-                                <div className="w-[38px] h-[38px] md:w-[48px] md:h-[48px] rounded-full bg-zinc-50 dark:bg-dark-bg flex items-center justify-center p-2 md:p-2 border border-zinc-100 dark:border-dark-border/50 shadow-sm group-hover:scale-105 transition-transform">
-                                    <img src={asset.logoUrl} alt="" className="w-full h-full object-contain rounded-[22%]" />
-                                </div>
-                            </div>
-                            <div className="min-w-0">
-                                <div className="flex items-center space-x-2">
-                                    <h3 className="font-bold text-[14px] md:text-[16px] leading-tight text-zinc-900 dark:text-zinc-100">{asset.symbol}</h3>
-                                    <span className="text-[8px] md:text-[9px] font-bold text-blue-500 bg-blue-500/5 px-1 py-0.5 rounded-md uppercase tracking-wider">{asset.network}</span>
-                                </div>
-                                <div className="flex items-center space-x-2 mt-0.5">
-                                    <span className="text-[10px] md:text-[12px] font-bold text-zinc-400 tracking-tight">{formatPrice(asset.priceUsd)}</span>
-                                    <span className={`text-[9px] md:text-[11px] font-extrabold ${asset.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                        {asset.change24h >= 0 ? '+' : ''}{asset.change24h.toFixed(2)}%
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="text-right">
-                        <p className="font-extrabold text-[15px] md:text-[17px] leading-tight text-zinc-900 dark:text-zinc-100 tracking-tight">
-                            {formatToken(asset.balance)}
-                        </p>
-                        <p className="text-[11px] md:text-[13px] text-zinc-400 font-bold opacity-60 mt-0.5">
-                            {formatPrice(asset.balance * asset.priceUsd)}
-                        </p>
-                        </div>
-                    </div>
-                    ))}
-                    
-                    <button className="w-full py-3 md:py-4 bg-zinc-50/50 dark:bg-dark-surface/50 rounded-[18px] md:rounded-[24px] flex items-center justify-center space-x-2.5 text-zinc-400 font-bold text-[10px] md:text-[11px] hover:bg-zinc-100 transition-colors uppercase tracking-widest mt-2 border border-dashed border-zinc-200 dark:border-dark-border">
-                        <Plus size={12} className="md:w-4 md:h-4" />
-                        <span>{t.manage}</span>
-                    </button>
+                <div className="text-right">
+                  <p className="font-extrabold text-[17px] text-black dark:text-white tracking-tight leading-none">
+                    {formatToken(asset.balance)}
+                  </p>
+                  <p className="text-[13px] text-[#8E8E93] dark:text-zinc-500 font-bold mt-1">
+                    {formatPrice(asset.balance * asset.priceUsd)}
+                  </p>
                 </div>
-            </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Manage Button matching Screenshot 1 */}
+          <div className="px-5 mt-4 mb-10">
+            <button className="w-full py-4 border-2 border-dashed border-zinc-100 dark:border-dark-border rounded-2xl flex items-center justify-center space-x-2 text-[#8E8E93] dark:text-zinc-500 font-bold text-[14px] hover:bg-zinc-50 dark:hover:bg-dark-surface transition-colors uppercase tracking-widest">
+              <Plus size={16} />
+              <span>{t.manage}</span>
+            </button>
+          </div>
         </div>
-      </div>
+      </section>
 
+      {/* Address Selection Overlay */}
       {showCopyMenu && (
-        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center animate-fade-in p-0 m-0">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" onClick={() => setShowCopyMenu(false)}></div>
-          <div className="w-full max-w-[430px] bg-white dark:bg-zinc-950 rounded-t-[40px] md:rounded-[44px] p-6 md:p-10 pb-10 relative animate-ios-bottom-up md:animate-scale-in shadow-2xl border-t md:border border-white/5">
-            <div className="w-12 h-1 bg-zinc-200 dark:bg-zinc-800 rounded-full mx-auto mb-8 md:hidden"></div>
-            <div className="flex items-center justify-between mb-6 px-2">
-                <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight">Copy Address</h3>
-                <button onClick={() => setShowCopyMenu(false)} className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-500 btn-press">
-                    <X size={20} strokeWidth={2.5} />
+        <div className="fixed inset-0 z-[100] flex items-end justify-center animate-fade-in">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setShowCopyMenu(false)}></div>
+          <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-t-[32px] p-6 pb-12 relative animate-ios-bottom-up shadow-2xl">
+            <div className="w-12 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full mx-auto mb-6"></div>
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-extrabold tracking-tight">Copy Address</h3>
+                <button onClick={() => setShowCopyMenu(false)} className="p-2 text-zinc-400">
+                    <X size={20} />
                 </button>
             </div>
-            <div className="space-y-3.5">
+            <div className="space-y-3">
               {[
                 { label: 'BITCOIN', type: 'bitcoin' as const, logo: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png', network: 'SegWit' },
                 { label: 'EVM', type: 'evm' as const, logo: 'https://cryptologos.cc/logos/ethereum-eth-logo.png', network: 'Multi-chain' },
                 { label: 'TRON', type: 'tron' as const, logo: 'https://cryptologos.cc/logos/tron-trx-logo.png', network: 'TRC-20' },
               ].map((item) => (
-                <button key={item.type} onClick={() => handleCopy(item.type)} className="w-full flex items-center justify-between p-5 rounded-[26px] bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 btn-press">
-                  <div className="flex items-center space-x-5">
-                    <div className="w-11 h-11 rounded-2xl bg-white dark:bg-dark-surface p-2 shadow-sm"><img src={item.logo} className="w-full h-full object-contain" alt="" /></div>
-                    <div className="text-left"><span className="font-extrabold text-[15px] block leading-none mb-1">{item.label}</span><span className="text-[11px] text-zinc-400 font-bold uppercase tracking-wider">{item.network}</span></div>
+                <button key={item.type} onClick={() => handleCopy(item.type)} className="w-full flex items-center justify-between p-4 rounded-2xl bg-zinc-50 dark:bg-dark-surface border border-zinc-100 dark:border-dark-border btn-press">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 rounded-full bg-white dark:bg-dark-bg p-1.5 shadow-sm"><img src={item.logo} className="w-full h-full object-contain" alt="" /></div>
+                    <div className="text-left"><span className="font-extrabold text-[15px] block">{item.label}</span><span className="text-[11px] text-zinc-400 font-bold">{item.network}</span></div>
                   </div>
-                  {copiedNetwork === item.type ? (<div className="flex items-center space-x-1.5 text-green-500 font-bold text-[12px] uppercase animate-pop-in"><Check size={18} strokeWidth={3} /><span>Copied</span></div>) : (<div className="p-2.5 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-zinc-300"><Copy size={18} /></div>)}
+                  {copiedNetwork === item.type ? (<Check size={20} className="text-[#34C759]" strokeWidth={3} />) : (<Copy size={18} className="text-zinc-300" />)}
                 </button>
               ))}
             </div>
