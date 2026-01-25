@@ -1,18 +1,16 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Asset, Transaction, Wallet, Language } from '../types';
-import { ChevronLeft, QrCode, X, ChevronDown, CheckCircle2, Clipboard, Loader2, Info, Activity, Wallet as WalletIcon } from 'lucide-react';
+import { Asset, Transaction } from '../types';
+import { ChevronLeft, QrCode, ShieldCheck, X, ChevronDown, CheckCircle2, Clipboard, Loader2, Info, Activity } from 'lucide-react';
 import { USER_ADDRESSES } from '../constants';
 
 interface Props {
   assets: Asset[];
-  wallets: Wallet[];
   initialAssetId: string | null;
   onBack: () => void;
-  onSend: (tx: Transaction, toWalletId?: string) => void;
+  onSend: (tx: Transaction) => void;
   t: any;
   walletName: string;
-  language: Language;
 }
 
 const formatValue = (val: any, decimals: number = 4) => {
@@ -33,7 +31,7 @@ const formatUSD = (val: any) => {
   });
 };
 
-const SendView: React.FC<Props> = ({ assets, wallets, initialAssetId, onBack, onSend, t, walletName, language }) => {
+const SendView: React.FC<Props> = ({ assets, initialAssetId, onBack, onSend, t, walletName }) => {
   const [asset, setAsset] = useState<Asset>(() => {
     return assets.find(a => a.id === initialAssetId) || assets[0];
   });
@@ -43,8 +41,6 @@ const SendView: React.FC<Props> = ({ assets, wallets, initialAssetId, onBack, on
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [statusStep, setStatusStep] = useState(0);
-  const [selectedTargetWalletId, setSelectedTargetWalletId] = useState<string | null>(null);
-  const [showWalletPicker, setShowWalletPicker] = useState(false);
 
   const statusMessages = useMemo(() => [
     'Blockchain validation in progress...',
@@ -54,6 +50,7 @@ const SendView: React.FC<Props> = ({ assets, wallets, initialAssetId, onBack, on
     'Finalizing block inclusion...'
   ], []);
 
+  // Realistic dynamic Tron fee logic
   const trxPrice = useMemo(() => {
     const trx = assets.find(a => a.id === 'tron');
     return trx ? trx.priceUsd : 0.12; 
@@ -83,17 +80,14 @@ const SendView: React.FC<Props> = ({ assets, wallets, initialAssetId, onBack, on
 
   const handleNext = () => {
     const numAmount = parseFloat(amount);
-    if ((!address && !selectedTargetWalletId) || isNaN(numAmount) || numAmount <= 0) return;
+    if (!address || isNaN(numAmount) || numAmount <= 0) return;
     setIsConfirming(true);
   };
 
   const handlePaste = async () => {
     try {
       const text = await navigator.clipboard.readText();
-      if (text) {
-        setAddress(text);
-        setSelectedTargetWalletId(null);
-      }
+      if (text) setAddress(text);
     } catch (err) {
       console.debug('Clipboard access denied');
     }
@@ -109,12 +103,12 @@ const SendView: React.FC<Props> = ({ assets, wallets, initialAssetId, onBack, on
         assetId: asset.id,
         type: 'send',
         amount: parseFloat(amount),
-        address: selectedTargetWalletId ? wallets.find(w => w.id === selectedTargetWalletId)?.name : address,
+        address,
         timestamp: Date.now(),
         status: 'confirmed',
         hash: `0x${Math.random().toString(16).slice(2, 10)}...`,
         networkFee: `${dynamicFeeTRX} TRX ($${dynamicFeeUSD})`
-      }, selectedTargetWalletId || undefined);
+      });
       setIsProcessing(false);
       setIsSuccess(true);
       setTimeout(() => {
@@ -127,13 +121,6 @@ const SendView: React.FC<Props> = ({ assets, wallets, initialAssetId, onBack, on
     if (asset.id === 'bitcoin') return USER_ADDRESSES.bitcoin;
     if (asset.id === 'tron' || asset.id === 'usdt-tron') return USER_ADDRESSES.tron;
     return USER_ADDRESSES.evm;
-  };
-
-  const handleSelectWallet = (id: string) => {
-    setSelectedTargetWalletId(id);
-    const w = wallets.find(wall => wall.id === id);
-    setAddress(w?.name || '');
-    setShowWalletPicker(false);
   };
 
   if (isSuccess) {
@@ -153,26 +140,53 @@ const SendView: React.FC<Props> = ({ assets, wallets, initialAssetId, onBack, on
   if (isProcessing) {
     return (
       <div className="h-full flex flex-col items-center justify-center bg-white dark:bg-black p-10 animate-fade-in text-black dark:text-white relative overflow-hidden">
+        {/* Animated Visualizer */}
         <div className="relative w-36 h-36 mb-12 flex items-center justify-center">
+            {/* Pulsing rings */}
             <div className="absolute inset-0 bg-blue-600/5 rounded-full animate-ping"></div>
             <div className="absolute inset-4 bg-blue-600/10 rounded-full animate-pulse"></div>
+            
+            {/* Main Spinners */}
             <div className="absolute inset-0 border-4 border-[#3262F1]/10 rounded-full"></div>
             <div className="absolute inset-0 border-4 border-[#3262F1] border-t-transparent rounded-full animate-spin"></div>
+            
             <Activity className="text-[#3262F1] animate-pulse relative z-10" size={56} strokeWidth={2} />
+
+            {/* Orbiting particles */}
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="absolute w-2.5 h-2.5 bg-[#3262F1] rounded-full shadow-lg shadow-[#3262F1]/40" style={{ top: '50%', left: '50%', transform: `rotate(${i * 45}deg) translate(72px) rotate(-${i * 45}deg)`, opacity: statusStep >= i % 5 ? 1 : 0.2, transition: 'opacity 0.4s ease' }} />
+              <div 
+                key={i}
+                className="absolute w-2.5 h-2.5 bg-[#3262F1] rounded-full shadow-lg shadow-[#3262F1]/40"
+                style={{
+                  top: '50%',
+                  left: '50%',
+                  transform: `rotate(${i * 45}deg) translate(72px) rotate(-${i * 45}deg)`,
+                  opacity: statusStep >= i % 5 ? 1 : 0.2,
+                  transition: 'opacity 0.4s ease'
+                }}
+              />
             ))}
         </div>
+
         <h2 className="text-2xl font-bold tracking-tight text-center">{t.processing}</h2>
         <div className="mt-6 space-y-3 flex flex-col items-center text-center max-w-[280px]">
-            <p className="text-zinc-500 text-[15px] font-bold h-10 leading-tight transition-all duration-300">{statusMessages[statusStep]}</p>
+            <p className="text-zinc-500 text-[15px] font-bold h-10 leading-tight transition-all duration-300">
+                {statusMessages[statusStep]}
+            </p>
             <div className="flex space-x-1">
                {[...Array(5)].map((_, i) => (
-                 <div key={i} className={`h-1 rounded-full transition-all duration-500 ${i <= statusStep ? 'w-8 bg-[#3262F1]' : 'w-2 bg-zinc-200 dark:bg-zinc-800'}`} />
+                 <div 
+                    key={i} 
+                    className={`h-1 rounded-full transition-all duration-500 ${i <= statusStep ? 'w-8 bg-[#3262F1]' : 'w-2 bg-zinc-200 dark:bg-zinc-800'}`}
+                 />
                ))}
             </div>
             <p className="text-zinc-400 text-[11px] font-bold uppercase tracking-[0.2em] opacity-40 mt-2">TRON Mainnet Network</p>
         </div>
+        
+        {/* Glow Effects */}
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-blue-600/5 rounded-full blur-[100px] pointer-events-none"></div>
+        <div className="absolute -top-20 -right-20 w-80 h-80 bg-blue-600/5 rounded-full blur-[100px] pointer-events-none"></div>
       </div>
     );
   }
@@ -203,6 +217,7 @@ const SendView: React.FC<Props> = ({ assets, wallets, initialAssetId, onBack, on
 
           <div className="bg-white border border-zinc-100 rounded-[32px] overflow-hidden shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)] mx-1">
             <div className="p-6 space-y-7">
+              {/* Asset Row */}
               <div className="flex justify-between items-center">
                 <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em]">{t.assetLabel}</p>
                 <div className="flex items-center space-x-2.5">
@@ -210,6 +225,8 @@ const SendView: React.FC<Props> = ({ assets, wallets, initialAssetId, onBack, on
                   <span className="font-bold text-[15px] text-[#1A1C1E]">{asset.symbol}</span>
                 </div>
               </div>
+
+              {/* From Row */}
               <div className="flex justify-between items-start pt-6 border-t border-zinc-50">
                 <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em] mt-1">{t.fromLabel}</p>
                 <div className="text-right">
@@ -217,14 +234,18 @@ const SendView: React.FC<Props> = ({ assets, wallets, initialAssetId, onBack, on
                     <p className="font-mono text-[11px] text-[#A2ABB8] font-bold tracking-tight">{truncatedFrom}</p>
                 </div>
               </div>
+
+              {/* To Row */}
               <div className="flex justify-between items-start pt-6 border-t border-zinc-50">
                 <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em] mt-1">{t.toLabel}</p>
                 <div className="text-right max-w-[220px]">
                   <p className="font-mono text-[11px] break-all text-[#1A1C1E] leading-relaxed font-bold">
-                      {selectedTargetWalletId ? wallets.find(w => w.id === selectedTargetWalletId)?.name : address}
+                      {address}
                   </p>
                 </div>
               </div>
+
+              {/* Fee Row */}
               <div className="flex justify-between items-center pt-6 border-t border-zinc-50">
                 <div className="flex items-center space-x-1.5">
                    <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em]">{t.feeLabel}</p>
@@ -235,6 +256,8 @@ const SendView: React.FC<Props> = ({ assets, wallets, initialAssetId, onBack, on
                 </p>
               </div>
             </div>
+            
+            {/* Max Total Section */}
             <div className="bg-[#F8FAFC] p-6 flex justify-between items-center border-t border-zinc-50">
                 <p className="text-[#A2ABB8] text-[10px] font-bold uppercase tracking-[0.2em]">{t.maxTotalLabel}</p>
                 <p className="font-bold text-[15px] text-[#3262F1]">
@@ -244,7 +267,10 @@ const SendView: React.FC<Props> = ({ assets, wallets, initialAssetId, onBack, on
           </div>
 
           <div className="mt-auto pt-12 pb-10 px-4">
-            <button onClick={handleFinalSend} className="w-full py-5 bg-[#3262F1] text-white rounded-2xl font-bold text-[18px] shadow-[0_12px_30px_-5px_rgba(50,98,241,0.35)] btn-press active:scale-95 transition-all">
+            <button 
+              onClick={handleFinalSend}
+              className="w-full py-5 bg-[#3262F1] text-white rounded-2xl font-bold text-[18px] shadow-[0_12px_30px_-5px_rgba(50,98,241,0.35)] btn-press active:scale-95 transition-all"
+            >
               {t.confirm}
             </button>
           </div>
@@ -265,14 +291,10 @@ const SendView: React.FC<Props> = ({ assets, wallets, initialAssetId, onBack, on
 
       <div className="px-6 space-y-6 mt-4 flex-1 overflow-y-auto no-scrollbar pb-10">
         <div className="space-y-4">
-          <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-white/5 rounded-[28px] p-5 shadow-sm relative">
+          <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-white/5 rounded-[28px] p-5 shadow-sm">
             <div className="flex justify-between items-center mb-3 ml-1">
               <label className="text-zinc-400 text-[10px] font-bold uppercase tracking-[0.2em]">{t.recipient}</label>
               <div className="flex items-center space-x-4">
-                <button onClick={() => setShowWalletPicker(true)} className="text-[#3262F1] text-[11px] font-bold flex items-center space-x-1 active:opacity-60">
-                  <WalletIcon size={12} />
-                  <span>{language === 'ru' ? 'МОИ' : 'MY'}</span>
-                </button>
                 <button onClick={handlePaste} className="text-[#3262F1] text-[11px] font-bold flex items-center space-x-1 active:opacity-60">
                   <Clipboard size={12} />
                   <span>PASTE</span>
@@ -286,35 +308,9 @@ const SendView: React.FC<Props> = ({ assets, wallets, initialAssetId, onBack, on
             <textarea 
               placeholder="Recipient address"
               value={address}
-              onChange={(e) => {
-                setAddress(e.target.value);
-                setSelectedTargetWalletId(null);
-              }}
-              className={`w-full bg-transparent text-black dark:text-white focus:outline-none transition-all text-[15px] font-bold placeholder-zinc-300 dark:placeholder-zinc-800 resize-none h-14 ${selectedTargetWalletId ? 'text-blue-600' : ''}`}
+              onChange={(e) => setAddress(e.target.value)}
+              className="w-full bg-transparent text-black dark:text-white focus:outline-none transition-all text-[15px] font-bold placeholder-zinc-300 dark:placeholder-zinc-800 resize-none h-14"
             />
-            
-            {showWalletPicker && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-[22px] shadow-xl z-20 overflow-hidden animate-pop-in">
-                <div className="p-3 border-b border-zinc-50 dark:border-white/5 flex justify-between items-center">
-                   <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{language === 'ru' ? 'Мои кошельки' : 'My Wallets'}</span>
-                   <button onClick={() => setShowWalletPicker(false)} className="text-zinc-400"><X size={14}/></button>
-                </div>
-                {wallets.length > 0 ? (
-                  wallets.map(w => (
-                    <button 
-                      key={w.id} 
-                      onClick={() => handleSelectWallet(w.id)}
-                      className="w-full text-left p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center space-x-3 transition-colors"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600"><WalletIcon size={16}/></div>
-                      <span className="font-bold text-sm">{w.name}</span>
-                    </button>
-                  ))
-                ) : (
-                  <div className="p-4 text-center text-zinc-400 text-xs">{language === 'ru' ? 'Нет других кошельков' : 'No other wallets'}</div>
-                )}
-              </div>
-            )}
           </div>
 
           <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-white/5 rounded-[28px] p-5 shadow-sm">
@@ -325,10 +321,24 @@ const SendView: React.FC<Props> = ({ assets, wallets, initialAssetId, onBack, on
               </div>
             </div>
             <div className="flex items-center min-w-0">
-              <input type="number" inputMode="decimal" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value)} className="flex-1 min-w-0 bg-transparent text-black dark:text-white focus:outline-none transition-all text-3xl font-bold placeholder-zinc-200 dark:placeholder-zinc-800" />
-              <button onClick={() => setAmount(asset.balance.toString())} className="shrink-0 text-[#3262F1] text-[11px] font-bold bg-[#3262F1]/10 px-3.5 py-1.5 rounded-xl border border-[#3262F1]/10 active:scale-95 transition-all ml-4 h-8 flex items-center justify-center">MAX</button>
+              <input 
+                type="number"
+                inputMode="decimal"
+                placeholder="0"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="flex-1 min-w-0 bg-transparent text-black dark:text-white focus:outline-none transition-all text-3xl font-bold placeholder-zinc-200 dark:placeholder-zinc-800"
+              />
+              <button 
+                onClick={() => setAmount(asset.balance.toString())}
+                className="shrink-0 text-[#3262F1] text-[11px] font-bold bg-[#3262F1]/10 px-3.5 py-1.5 rounded-xl border border-[#3262F1]/10 active:scale-95 transition-all ml-4 h-8 flex items-center justify-center"
+              >
+                MAX
+              </button>
             </div>
-            <div className="mt-2 ml-1"><span className="text-zinc-400 text-[13px] font-bold tracking-tight">≈ {usdValue} $</span></div>
+            <div className="mt-2 ml-1">
+              <span className="text-zinc-400 text-[13px] font-bold tracking-tight">≈ {usdValue} $</span>
+            </div>
           </div>
 
           <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-white/5 rounded-[28px] p-5 shadow-sm">
@@ -336,18 +346,35 @@ const SendView: React.FC<Props> = ({ assets, wallets, initialAssetId, onBack, on
             <div className="relative">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center p-1.5 shadow-sm"><img src={asset.logoUrl} className="w-full h-full object-contain" alt="" /></div>
-                  <div className="flex flex-col"><span className="font-bold text-[16px] leading-tight">{asset.symbol}</span><span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{asset.network}</span></div>
+                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center p-1.5 shadow-sm">
+                    <img src={asset.logoUrl} className="w-full h-full object-contain" alt="" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-[16px] leading-tight">{asset.symbol}</span>
+                    <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{asset.network}</span>
+                  </div>
                 </div>
                 <ChevronDown size={18} className="text-zinc-400" />
               </div>
-              <select value={asset.id} onChange={(e) => setAsset(assets.find(a => a.id === e.target.value)!)} className="absolute inset-0 opacity-0 cursor-pointer">{assets.map(a => (<option key={a.id} value={a.id}>{a.name} ({a.symbol})</option>))}</select>
+              <select 
+                value={asset.id}
+                onChange={(e) => setAsset(assets.find(a => a.id === e.target.value)!)}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+              >
+                {assets.map(a => (
+                  <option key={a.id} value={a.id}>{a.name} ({a.symbol})</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
 
         <div className="pt-8">
-          <button disabled={(!address && !selectedTargetWalletId) || !amount || parseFloat(amount) > asset.balance} onClick={handleNext} className="w-full py-5 bg-[#3262F1] text-white rounded-[26px] font-bold text-lg transition-all shadow-xl shadow-[#3262F1]/30 btn-press active:scale-95 disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none">
+          <button 
+            disabled={!address || !amount || parseFloat(amount) > asset.balance}
+            onClick={handleNext}
+            className="w-full py-5 bg-[#3262F1] text-white rounded-[26px] font-bold text-lg transition-all shadow-xl shadow-[#3262F1]/30 btn-press active:scale-95 disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none"
+          >
             {parseFloat(amount) > asset.balance ? t.insufficient : t.send}
           </button>
         </div>

@@ -68,12 +68,11 @@
             overflow: hidden;
             letter-spacing: -0.01em;
             height: 100vh;
-            background-color: #fcfcfd;
+            background-color: #f8f9fa;
         }
         .dark body {
             background-color: #0A0A0B;
         }
-
         .ios-scroll {
             -webkit-overflow-scrolling: touch;
         }
@@ -86,6 +85,7 @@
             transition: transform 0.1s ease;
         }
         .glass-panel {
+            /* Blur removed as requested by user */
             background-color: rgba(0, 0, 0, 0.4);
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
@@ -102,13 +102,6 @@
         .view-transition-enter {
             animation: iosSlideIn 0.4s cubic-bezier(0.32, 1, 0.2, 1) forwards;
         }
-        
-        .blur-balance {
-            filter: blur(12px);
-            transition: filter 0.3s ease;
-            user-select: none;
-        }
-
         @media screen and (orientation: landscape) and (max-height: 500px) {
             #orientation-lock {
                 display: flex !important;

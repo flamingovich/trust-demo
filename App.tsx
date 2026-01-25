@@ -96,16 +96,9 @@ const App: React.FC = () => {
       const currentAssets = activeWallet.assets;
       if (!currentAssets || currentAssets.length === 0) return;
       const cgIds = currentAssets.map(a => CG_ID_MAP[a.id] || a.id).join(',');
-      // Added sparkline=true to fetch history for mini-charts
       const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cgIds}&vs_currencies=usd&include_24hr_change=true`);
-      
-      // Secondary fetch for sparklines if needed, but for simplicity we can also simulate or use a second call to markets API
-      const sparklineRes = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${cgIds}&sparkline=true&price_change_percentage=24h`);
-      
       if (!response.ok) return;
       const data = await response.json();
-      const sparkData = sparklineRes.ok ? await sparklineRes.json() : [];
-
       lastPriceFetchRef.current = Date.now();
       setWallets(prev => prev.map(wallet => {
         if (wallet.id !== activeWalletId) return wallet;
@@ -113,14 +106,11 @@ const App: React.FC = () => {
           ...wallet,
           assets: wallet.assets.map(asset => {
             const cgId = CG_ID_MAP[asset.id] || asset.id;
-            const marketInfo = Array.isArray(sparkData) ? sparkData.find(s => s.id === cgId) : null;
-            
             if (data[cgId]) {
               return {
                 ...asset,
                 priceUsd: data[cgId].usd,
-                change24h: data[cgId].usd_24h_change || asset.change24h,
-                sparklineData: marketInfo?.sparkline_in_7d?.price || asset.sparklineData
+                change24h: data[cgId].usd_24h_change || asset.change24h
               };
             }
             return asset;
@@ -151,13 +141,8 @@ const App: React.FC = () => {
     localStorage.setItem('demo_wallet_theme', theme);
     localStorage.setItem('demo_wallet_currency', currency);
     const root = window.document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-      root.classList.remove('light');
-    } else {
-      root.classList.add('light');
-      root.classList.remove('dark');
-    }
+    if (theme === 'dark') root.classList.add('dark');
+    else root.classList.remove('dark');
   }, [wallets, activeWalletId, language, theme, currency]);
 
   const formatPrice = useCallback((usdAmount: number) => {
@@ -177,14 +162,12 @@ const App: React.FC = () => {
     setActiveView(view);
   };
 
-  const handleAddTransaction = (tx: Transaction, toWalletId?: string) => {
-    const hash = `0x${Math.random().toString(16).slice(2, 12)}${Math.random().toString(16).slice(2, 12)}...`;
+  const handleAddTransaction = (tx: Transaction) => {
     const fullTx: Transaction = {
       ...tx,
-      hash,
+      hash: `0x${Math.random().toString(16).slice(2, 12)}${Math.random().toString(16).slice(2, 12)}...`,
       networkFee: '0.85 USD'
     };
-
     setWallets(prev => prev.map(w => {
       if (w.id === activeWalletId) {
         const updatedAssets = w.assets.map(a => {
@@ -199,22 +182,6 @@ const App: React.FC = () => {
         });
         return { ...w, assets: updatedAssets, transactions: [fullTx, ...(w.transactions || [])] };
       }
-      
-      if (toWalletId && w.id === toWalletId && tx.type === 'send') {
-        const updatedAssets = w.assets.map(a => {
-          if (a.id === tx.assetId) {
-            return { ...a, balance: a.balance + tx.amount };
-          }
-          return a;
-        });
-        const receivedTx: Transaction = {
-          ...fullTx,
-          type: 'receive',
-          address: activeWallet.name 
-        };
-        return { ...w, assets: updatedAssets, transactions: [receivedTx, ...(w.transactions || [])] };
-      }
-      
       return w;
     }));
   };
@@ -224,7 +191,7 @@ const App: React.FC = () => {
     const newWallet: Wallet = {
       id: newId,
       name: language === 'ru' ? `Кошелек ${wallets.length + 1}` : `Wallet ${wallets.length + 1}`,
-      assets: INITIAL_ASSETS.map(asset => ({ ...asset, balance: 0 })),
+      assets: INITIAL_ASSETS,
       transactions: []
     };
     setWallets([...wallets, newWallet]);
@@ -238,22 +205,15 @@ const App: React.FC = () => {
     if (activeWalletId === id) setActiveWalletId(newWallets[0].id);
   };
 
-  const handleRenameWallet = (id: string, newName: string) => {
-    if (!newName.trim()) return;
-    setWallets(prev => prev.map(w => w.id === id ? { ...w, name: newName } : w));
-  };
-
   const handleReset = () => {
-    setWallets(prev => prev.map(w => {
-      if (w.id === activeWalletId) {
-        return {
-          ...w,
-          assets: w.assets.map(a => ({ ...a, balance: 0 })),
-          transactions: []
-        };
-      }
-      return w;
-    }));
+    localStorage.clear();
+    setWallets([{
+      id: 'wallet-1', 
+      name: language === 'ru' ? 'Основной кошелек' : 'Main Wallet', 
+      assets: INITIAL_ASSETS, 
+      transactions: [] 
+    }]);
+    setActiveWalletId('wallet-1');
   };
 
   const handleBuyToken = (tokenData: any, usdtAmount: number) => {
@@ -312,7 +272,7 @@ const App: React.FC = () => {
         const selectedAsset = activeWallet.assets.find(a => a.id === selectedAssetId);
         return <AssetDetailView asset={selectedAsset} transactions={activeWallet.transactions.filter(tx => tx.assetId === selectedAssetId || tx.toAssetId === selectedAssetId)} onBack={() => navigateTo('wallet')} onAction={(view) => navigateTo(view, selectedAssetId)} t={t} formatPrice={formatPrice} language={language} allAssets={activeWallet.assets} />;
       case 'send':
-        return <SendView assets={activeWallet.assets} wallets={wallets.filter(w => w.id !== activeWalletId)} initialAssetId={selectedAssetId} onBack={() => navigateTo('wallet')} onSend={handleAddTransaction} t={t} walletName={activeWallet.name} language={language} />;
+        return <SendView assets={activeWallet.assets} initialAssetId={selectedAssetId} onBack={() => navigateTo('wallet')} onSend={handleAddTransaction} t={t} walletName={activeWallet.name} />;
       case 'receive':
         return <ReceiveView assets={activeWallet.assets} initialAssetId={selectedAssetId} onBack={() => navigateTo('wallet')} onSimulateReceive={handleAddTransaction} t={t} />;
       case 'top-up':
@@ -326,22 +286,24 @@ const App: React.FC = () => {
       case 'discover':
         return <DiscoverView onBuy={handleBuyToken} usdtBalance={activeWallet.assets.find(a => a.id === 'usdt-tron')?.balance || 0} language={language} />;
       case 'wallet-manager':
-        return <WalletManagerView wallets={wallets} activeWalletId={activeWalletId} onSelect={(id) => { setActiveWalletId(id); navigateTo('wallet'); }} onCreate={handleCreateWallet} onDelete={handleDeleteWallet} onRename={handleRenameWallet} onClose={() => navigateTo('wallet')} t={t} language={language} />;
+        return <WalletManagerView wallets={wallets} activeWalletId={activeWalletId} onSelect={(id) => { setActiveWalletId(id); navigateTo('wallet'); }} onCreate={handleCreateWallet} onDelete={handleDeleteWallet} onClose={() => navigateTo('wallet')} t={t} language={language} />;
       default:
         return <div className="p-10 text-center text-zinc-500">В разработке</div>;
     }
   };
 
   return (
-    <div className={`flex flex-col md:flex-row h-screen w-full transition-colors duration-500 relative z-10 ${theme === 'dark' ? 'bg-transparent' : 'bg-transparent'}`}>
+    <div className={`flex flex-col md:flex-row h-screen w-full transition-colors duration-500 ${theme === 'dark' ? 'bg-[#0a0a0b]' : 'bg-white'}`}>
       {isLocked && (
         <LockScreen onUnlock={() => setIsLocked(false)} theme={theme} language={language} />
       )}
       
+      {/* Desktop Sidebar */}
       <div className="hidden md:flex">
         <Sidebar activeView={activeView} onViewChange={(v) => navigateTo(v)} t={t} theme={theme} />
       </div>
 
+      {/* Main Content Area */}
       <div className="flex-1 flex justify-center h-full relative overflow-hidden">
         <div className="w-full h-full flex flex-col relative">
             <main className="flex-1 overflow-y-auto ios-scroll no-scrollbar relative">
@@ -350,6 +312,7 @@ const App: React.FC = () => {
                 </div>
             </main>
             
+            {/* Mobile Bottom Nav */}
             <div className="md:hidden">
                 {['wallet', 'swap', 'discover', 'settings'].includes(activeView) && (
                 <BottomNav activeView={activeView} onViewChange={(view) => navigateTo(view)} t={t} />

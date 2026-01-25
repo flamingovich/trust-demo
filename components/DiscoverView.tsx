@@ -30,36 +30,25 @@ const DiscoverView: React.FC<Props> = ({ onBuy, usdtBalance, language }) => {
 
       try {
         setIsLoading(true);
-        // Запрашиваем ТОП-100 и отдельно LIT и ZRO
-        const [resTop, resExtra] = await Promise.all([
-          fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false'),
-          fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=lighter,layerzero&vs_currency=usd&order=market_cap_desc&sparkline=false')
-        ]);
+        const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+            },
+        });
         
-        if (!resTop.ok) {
-          if (resTop.status === 429 && tokens.length > 0) {
+        if (!res.ok) {
+          // Если получили 429 (Too Many Requests), просто используем то, что есть, не пугая пользователя
+          if (res.status === 429 && tokens.length > 0) {
              setIsLoading(false);
              return;
           }
           throw new Error('API Rate Limit or Network Error');
         }
         
-        const dataTop = await resTop.json();
-        const dataExtra = resExtra.ok ? await resExtra.json() : [];
-
-        if (Array.isArray(dataTop)) {
-          // Объединяем, исключая дубликаты (если LIT/ZRO вдруг попали в топ-100)
-          // Затем строго пушим их в конец списка для 101 и 102 позиций
-          const combined = dataTop.filter(t => t.id !== 'lighter' && t.id !== 'layerzero');
-          
-          if (Array.isArray(dataExtra)) {
-            const lit = dataExtra.find(t => t.id === 'lighter');
-            const zro = dataExtra.find(t => t.id === 'layerzero');
-            if (lit) combined.push(lit);
-            if (zro) combined.push(zro);
-          }
-          
-          setTokens(combined);
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setTokens(data);
           setHasError(false);
           lastFetchRef.current = Date.now();
         } else {
@@ -126,7 +115,7 @@ const DiscoverView: React.FC<Props> = ({ onBuy, usdtBalance, language }) => {
               <TrendingUp size={14} className="text-zinc-400" />
             </div>
             
-            {filteredTokens.map((token, index) => (
+            {filteredTokens.map((token) => (
               <div 
                 key={token.id} 
                 onClick={() => setSelectedToken(token)}

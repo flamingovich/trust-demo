@@ -11,7 +11,6 @@ export interface Asset {
   icon: string;
   logoUrl: string;
   color: string;
-  sparklineData?: number[];
 }
 
 export interface Transaction {

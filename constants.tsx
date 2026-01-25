@@ -17,9 +17,7 @@ export const CG_ID_MAP: Record<string, string> = {
   'binancecoin': 'binancecoin',
   'ripple': 'ripple',
   'dogecoin': 'dogecoin',
-  'cardano': 'cardano',
-  'lighter': 'lighter',
-  'layerzero': 'layerzero'
+  'cardano': 'cardano'
 };
 
 export const INITIAL_ASSETS: Asset[] = [
@@ -83,7 +81,5 @@ export const FALLBACK_MARKET_DATA = [
   { id: 'ripple', name: 'XRP', symbol: 'xrp', current_price: 0.62, price_change_percentage_24h: -1.15, image: 'https://cryptologos.cc/logos/xrp-xrp-logo.png' },
   { id: 'dogecoin', name: 'Dogecoin', symbol: 'doge', current_price: 0.16, price_change_percentage_24h: 12.45, image: 'https://cryptologos.cc/logos/dogecoin-doge-logo.png' },
   { id: 'cardano', name: 'Cardano', symbol: 'ada', current_price: 0.45, price_change_percentage_24h: 0.50, image: 'https://cryptologos.cc/logos/cardano-ada-logo.png' },
-  { id: 'tron', name: 'TRON', symbol: 'trx', current_price: 0.12, price_change_percentage_24h: 1.25, image: 'https://cryptologos.cc/logos/tron-trx-logo.png' },
-  { id: 'lighter', name: 'Lighter', symbol: 'lit', current_price: 0.054, price_change_percentage_24h: -2.3, image: 'https://assets.coingecko.com/coins/images/36224/standard/lighter.png' },
-  { id: 'layerzero', name: 'LayerZero', symbol: 'zro', current_price: 3.84, price_change_percentage_24h: 4.15, image: 'https://assets.coingecko.com/coins/images/38914/standard/zro.png' }
+  { id: 'tron', name: 'TRON', symbol: 'trx', current_price: 0.12, price_change_percentage_24h: 1.25, image: 'https://cryptologos.cc/logos/tron-trx-logo.png' }
 ];
