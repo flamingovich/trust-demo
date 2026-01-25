@@ -19,7 +19,7 @@ const BottomNav: React.FC<Props> = ({ activeView, onViewChange, t }) => {
   ];
 
   return (
-    <nav className="shrink-0 bg-white/95 dark:bg-dark-surface/95 backdrop-blur-md border-t border-zinc-100 dark:border-dark-border px-2 py-2.5 flex justify-between items-center z-50 transition-colors duration-300">
+    <nav className="shrink-0 bg-white/95 dark:bg-dark-surface/95 backdrop-blur-md border-t border-zinc-100 dark:border-dark-border px-2 py-2.5 pb-safe flex justify-between items-center z-50 transition-colors duration-300">
       {navItems.map((item) => (
         <button
           key={item.id}

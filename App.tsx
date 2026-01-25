@@ -320,7 +320,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className={`flex flex-col md:flex-row h-screen w-full transition-colors duration-500 ${theme === 'dark' ? 'bg-[#0a0a0b]' : 'bg-white'}`}>
+    <div className={`flex flex-col md:flex-row h-[100dvh] w-full transition-colors duration-500 ${theme === 'dark' ? 'bg-[#0a0a0b]' : 'bg-white'}`}>
       {isLocked && (
         <LockScreen onUnlock={() => setIsLocked(false)} theme={theme} language={language} />
       )}

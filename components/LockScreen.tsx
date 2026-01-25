@@ -11,7 +11,7 @@ interface Props {
 const LockScreen: React.FC<Props> = ({ onUnlock, theme, language }) => {
   const [pin, setPin] = useState<string>('');
   const [error, setError] = useState<boolean>(false);
-  const correctPin = "230023";
+  const correctPin = "232323";
 
   useEffect(() => {
     if (pin.length === 6) {
