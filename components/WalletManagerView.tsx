@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Wallet, Language } from '../types';
-import { X, Plus, Check, Trash2, Wallet as WalletIcon } from 'lucide-react';
+import { X, Plus, Check, Trash2, Wallet as WalletIcon, Edit2 } from 'lucide-react';
 
 interface Props {
   wallets: Wallet[];
@@ -9,21 +9,31 @@ interface Props {
   onSelect: (id: string) => void;
   onCreate: () => void;
   onDelete: (id: string) => void;
+  onRename: (id: string, name: string) => void;
   onClose: () => void;
   t: any;
   language: Language;
 }
 
-const WalletManagerView: React.FC<Props> = ({ wallets, activeWalletId, onSelect, onCreate, onDelete, onClose, t, language }) => {
+const WalletManagerView: React.FC<Props> = ({ wallets, activeWalletId, onSelect, onCreate, onDelete, onRename, onClose, t, language }) => {
   const calculateWalletBalance = (wallet: Wallet) => {
     return wallet.assets.reduce((sum, asset) => sum + (asset.balance * asset.priceUsd), 0);
+  };
+
+  const handleRenameClick = (e: React.MouseEvent, id: string, currentName: string) => {
+    e.stopPropagation();
+    // Using a clear prompt for renaming
+    const newName = window.prompt(language === 'ru' ? 'Введите новое имя кошелька:' : 'Enter new wallet name:', currentName);
+    if (newName !== null && newName.trim() !== "") {
+      onRename(id, newName.trim());
+    }
   };
 
   return (
     <div className="absolute inset-0 z-[110] flex items-end justify-center animate-fade-in">
       <div className="absolute inset-0 bg-black/60 glass-panel" onClick={onClose}></div>
       <div className="w-full bg-white dark:bg-zinc-950 rounded-t-[40px] p-8 pb-12 relative animate-ios-bottom-up shadow-2xl border-t border-white/5">
-        <div className="w-12 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full mx-auto mb-8"></div>
+        <div className="w-12 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full mx-auto mb-8 md:hidden"></div>
         
         <div className="flex items-center justify-between mb-8 px-2">
           <h3 className="text-2xl font-medium tracking-tight text-black dark:text-white">{language === 'ru' ? 'Кошельки' : 'Wallets'}</h3>
@@ -41,7 +51,7 @@ const WalletManagerView: React.FC<Props> = ({ wallets, activeWalletId, onSelect,
               <div 
                 key={wallet.id}
                 onClick={() => onSelect(wallet.id)}
-                className={`flex items-center justify-between p-5 rounded-[28px] border transition-all cursor-pointer ${
+                className={`flex items-center justify-between p-5 rounded-[28px] border transition-all cursor-pointer group ${
                   isActive 
                   ? 'bg-blue-600/5 border-blue-500/20 shadow-sm' 
                   : 'bg-zinc-50 dark:bg-zinc-900/50 border-transparent hover:border-zinc-200 dark:hover:border-white/10'
@@ -52,9 +62,18 @@ const WalletManagerView: React.FC<Props> = ({ wallets, activeWalletId, onSelect,
                     <WalletIcon size={22} strokeWidth={1.5} />
                   </div>
                   <div className="text-left">
-                    <p className={`font-medium text-base leading-tight ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-900 dark:text-zinc-100'}`}>
-                      {wallet.name}
-                    </p>
+                    <div className="flex items-center space-x-2">
+                      <p className={`font-medium text-base leading-tight ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-900 dark:text-zinc-100'}`}>
+                        {wallet.name}
+                      </p>
+                      <button 
+                        title="Rename"
+                        onClick={(e) => handleRenameClick(e, wallet.id, wallet.name)}
+                        className="p-1.5 text-zinc-400 hover:text-blue-600 transition-colors bg-white/50 dark:bg-zinc-800/50 rounded-lg"
+                      >
+                        <Edit2 size={12} strokeWidth={2.5} />
+                      </button>
+                    </div>
                     <div className="flex items-center space-x-2 mt-1">
                       <p className="text-[11px] text-zinc-500 font-normal uppercase tracking-widest">
                         {wallet.assets.length} {language === 'ru' ? 'активов' : 'assets'}
